@@ -5,7 +5,11 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.Map;
 
+import hai913i.tp2.coupling.ClassPair;
+import hai913i.tp2.coupling.Coupling;
+import hai913i.tp2.input.FactSource;
 import hai913i.tp2.input.Facts;
 
 /**
@@ -92,7 +96,8 @@ public final class Main {
             return;
         }
 
-        Facts facts;
+        // A0 — le reste du programme ne voit que l'interface FactSource
+        FactSource facts;
         try {
             if (prefix == null) {
                 prefix = Facts.discoverPrefix(dir);
@@ -107,16 +112,24 @@ public final class Main {
         OUT.println("Dossier des faits   : " + dir.toAbsolutePath());
         OUT.println("Jeu de données      : " + prefix);
         OUT.printf(Locale.ROOT, "Classes             : %d%n",
-                facts.classes().size());
+                facts.classNames().size());
         OUT.printf(Locale.ROOT, "Méthodes            : %d%n",
                 facts.methodOwners().size());
         OUT.printf(Locale.ROOT, "Arcs du graphe      : %d%n",
                 facts.calls().size());
         OUT.printf(Locale.ROOT, "Seuil CP retenu     : %.4f%n", cp);
 
-        // TODO étape A1 : écarter les arcs intra-classe, agréger les arcs
-        //                 restants par couple de classes distinctes, puis
-        //                 calculer C(A, B) = r(A, B) / |E_inter|.
+        // A1 — couplage entre classes
+        Coupling coupling;
+        try {
+            coupling = Coupling.from(facts);
+        } catch (IllegalArgumentException e) {
+            ERR.println("Faits incohérents : " + e.getMessage());
+            System.exit(2);
+            return;
+        }
+        printCoupling(coupling);
+
         // TODO étape A2 : construire et exporter le graphe de couplage pondéré.
         // TODO étape B1 : regroupement hiérarchique ascendant, lien moyen,
         //                 égalités départagées comme le sujet l'impose.
@@ -124,7 +137,37 @@ public final class Main {
         // TODO étape B3 : couper l'arbre sous les trois contraintes, puis
         //                 vérifier la contrainte M/2 et signaler sa violation.
         OUT.println();
-        OUT.println("Faits chargés. Les étapes A1 à B3 restent à écrire.");
+        OUT.println("Les étapes A2 à B3 restent à écrire.");
+    }
+
+    /**
+     * Affiche le résultat de l'étape A1 : arcs écartés, dénominateur, couples
+     * par couplage décroissant, et contrôle de la somme.
+     *
+     * @param c le couplage calculé
+     */
+    private static void printCoupling(Coupling c) {
+        OUT.println();
+        OUT.println("== A1 · Couplage entre classes ==");
+        OUT.printf(Locale.ROOT, "Arcs internes écartés : %d%n", c.internalArcs());
+        OUT.printf(Locale.ROOT, "|E_inter|             : %d%n", c.interArcs());
+        OUT.printf(Locale.ROOT, "Couples non nuls      : %d / %d%n",
+                c.nonZeroPairs().size(), c.possiblePairs());
+        OUT.println();
+        OUT.printf(Locale.ROOT, "  %-34s %-34s %3s  %7s  %s%n",
+                "classe A", "classe B", "r", "r/|E|", "C(A,B)");
+        for (Map.Entry<ClassPair, Integer> e : c.byDecreasingCoupling()) {
+            ClassPair p = e.getKey();
+            OUT.printf(Locale.ROOT, "  %-34s %-34s %3d  %7s  %.4f%n",
+                    p.first(), p.second(), e.getValue(),
+                    e.getValue() + "/" + c.interArcs(),
+                    c.c(p.first(), p.second()));
+        }
+        double total = c.total();
+        boolean ok = c.interArcs() == 0 || Math.abs(total - 1.0) < 1e-9;
+        OUT.println();
+        OUT.printf(Locale.ROOT, "Somme des couplages   : %.4f  %s%n",
+                total, ok ? "(contrôle OK)" : "(ANOMALIE : devrait valoir 1)");
     }
 
     /**
