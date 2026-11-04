@@ -1,4 +1,4 @@
-package hai913i.tp2;
+package hai913i.tp2.input;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -44,7 +44,7 @@ import java.util.Map;
  * sujet ; {@link #methodOwners()} contient <em>toutes</em> les méthodes du
  * projet, y compris celles qui n'apparaissent dans aucun appel.</p>
  */
-public final class Facts {
+public final class Facts implements FactSource {
 
     /**
      * Une classe du projet analysé.
@@ -56,25 +56,8 @@ public final class Facts {
     public record ClassInfo(String name, String simpleName, String packageName) {
     }
 
-    /**
-     * Un arc du graphe d'appel : un couple (méthode appelante, méthode appelée),
-     * compté <b>une seule fois</b>, avec le nombre de sites d'appel
-     * correspondants.
-     *
-     * <p>La distinction est celle du § 5.2 du sujet : sur
-     * le projet de validation, il y a 37 arcs inter-classes pour 38 sites
-     * d'appel inter-classes. Le TP 2 compte des <b>arcs</b>, donc des lignes de
-     * cette liste, et non la somme des {@code sites}.</p>
-     *
-     * @param caller      identifiant de la méthode appelante
-     * @param callerClass nom qualifié de la classe qui la contient
-     * @param callee      identifiant de la méthode appelée
-     * @param calleeClass nom qualifié de la classe qui la contient
-     * @param sites       nombre d'occurrences de cet appel dans le code source
-     */
-    public record CallArc(String caller, String callerClass,
-                          String callee, String calleeClass, int sites) {
-    }
+    // Le record CallArc est déclaré dans FactSource et hérité ici :
+    // Facts.CallArc et FactSource.CallArc désignent le même type.
 
     private final List<ClassInfo> classes;
     private final Map<String, String> methodOwners;
@@ -239,6 +222,7 @@ public final class Facts {
      *
      * @return nouvelle liste triée, modifiable sans effet sur cet objet
      */
+    @Override
     public List<String> classNames() {
         List<String> out = new ArrayList<>();
         for (ClassInfo c : classes) {
@@ -255,6 +239,7 @@ public final class Facts {
      *
      * @return table immuable, identifiant de méthode vers nom qualifié de classe
      */
+    @Override
     public Map<String, String> methodOwners() {
         return methodOwners;
     }
@@ -268,6 +253,7 @@ public final class Facts {
      *
      * @return liste immuable ; sa taille est le compteur d'arcs de l'étape A0
      */
+    @Override
     public List<CallArc> calls() {
         return calls;
     }

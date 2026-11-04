@@ -1,4 +1,4 @@
-package hai913i.tp2;
+package hai913i.tp2.input;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
