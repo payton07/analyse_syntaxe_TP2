@@ -1,0 +1,6 @@
+method;owner
+demo.A#f();demo.A
+demo.A#g();demo.A
+demo.B#h();demo.B
+demo.B#i();demo.B
+demo.C#j();demo.C

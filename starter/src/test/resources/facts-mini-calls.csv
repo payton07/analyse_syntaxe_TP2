@@ -1,0 +1,5 @@
+caller;callerClass;callee;calleeClass;sites
+demo.A#f();demo.A;demo.B#h();demo.B;2
+demo.A#g();demo.A;demo.B#h();demo.B;1
+demo.A#f();demo.A;demo.A#g();demo.A;1
+demo.B#i();demo.B;demo.C#j();demo.C;1

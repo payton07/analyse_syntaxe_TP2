@@ -1,0 +1,22 @@
+# Documents de l'enseignant (sujet, annexe, exemples)
+*.pdf
+examples/
+
+# Rapport et sources du rapport (hors dépôt)
+rapport/
+*.typ
+plantuml/
+*.puml
+
+# Livrables hors dépôt
+*.zip
+video/
+liens.txt
+
+# Sorties générées (reproductibles avec le jar)
+starter/sorties/
+
+# Build, IDE, système
+target/
+.idea/
+.DS_Store
