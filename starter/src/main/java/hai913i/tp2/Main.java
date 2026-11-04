@@ -6,6 +6,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Locale;
 
+import hai913i.tp2.input.Facts;
+
 /**
  * Point d'entrée du squelette : vérifie l'environnement et charge les faits.
  *

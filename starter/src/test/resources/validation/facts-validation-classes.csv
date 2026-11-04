@@ -1,0 +1,16 @@
+class;simpleName;package
+library.app.LibraryApp;LibraryApp;library.app
+library.model.Book;Book;library.model
+library.model.Category;Category;library.model
+library.model.Dvd;Dvd;library.model
+library.model.Item;Item;library.model
+library.model.Loanable;Loanable;library.model
+library.model.Member;Member;library.model
+library.service.Catalog;Catalog;library.service
+library.service.ConsoleNotifier;ConsoleNotifier;library.service
+library.service.LoanException;LoanException;library.service
+library.service.LoanService;LoanService;library.service
+library.service.LoanService.Loan;Loan;library.service.LoanService
+library.service.Notifier;Notifier;library.service
+library.util.Statistics;Statistics;library.util
+library.util.TextUtils;TextUtils;library.util
