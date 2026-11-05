@@ -5,6 +5,7 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -18,6 +19,7 @@ import hai913i.tp2.graph.CouplingGraph;
 import hai913i.tp2.graph.GraphIO;
 import hai913i.tp2.input.FactSource;
 import hai913i.tp2.input.Facts;
+import hai913i.tp2.output.DendrogramExport;
 import hai913i.tp2.output.Names;
 
 /**
@@ -170,6 +172,22 @@ public final class Main {
         Dendrogram dendrogram = AverageLinkClustering.run(coupling.classes(),
                 Similarity.fromMatrix(coupling.matrix()));
         printMerges(dendrogram);
+
+        // B2 — restitution du dendrogramme
+        try {
+            List<Path> files = DendrogramExport.writeAll(dendrogram, out);
+            OUT.println();
+            OUT.println("== B2 · Dendrogramme ==");
+            OUT.printf(Locale.ROOT, "Feuilles / nœuds internes : %d / %d%n",
+                    coupling.classes().size(), dendrogram.merges().size());
+            for (Path f : files) {
+                OUT.println("Export                : " + f);
+            }
+        } catch (IOException e) {
+            ERR.println("Écriture des exports impossible : " + e.getMessage());
+            System.exit(2);
+            return;
+        }
 
         // TODO étape B3 : couper l'arbre sous les trois contraintes, puis
         //                 vérifier la contrainte M/2 et signaler sa violation.
