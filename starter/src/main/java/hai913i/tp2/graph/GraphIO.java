@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import hai913i.tp2.coupling.ClassPair;
+import hai913i.tp2.output.Names;
 
 /**
  * Exports du graphe de couplage (étape A2) : un CSV que le programme sait
@@ -144,7 +145,7 @@ public final class GraphIO {
         Set<String> isolated = new HashSet<>(g.isolated());
         Map<String, List<String>> byPackage = new TreeMap<>();
         for (String n : g.nodes()) {
-            byPackage.computeIfAbsent(packageOf(n), k -> new ArrayList<>()).add(n);
+            byPackage.computeIfAbsent(Names.packageOf(n), k -> new ArrayList<>()).add(n);
         }
         StringBuilder sb = new StringBuilder();
         sb.append("graph couplage {\n");
@@ -156,7 +157,7 @@ public final class GraphIO {
             sb.append("  subgraph cluster_").append(i++).append(" {\n");
             sb.append("    label=").append(quote(pkg.getKey())).append("; style=dashed; color=gray;\n");
             for (String n : pkg.getValue()) {
-                sb.append("    ").append(quote(n)).append(" [label=").append(quote(simpleName(n)));
+                sb.append("    ").append(quote(n)).append(" [label=").append(quote(Names.simple(n)));
                 if (isolated.contains(n)) {
                     sb.append(", fillcolor=\"#dddddd\", fontcolor=\"#666666\"");
                 }
@@ -171,35 +172,6 @@ public final class GraphIO {
         }
         sb.append("}\n");
         Files.writeString(file, sb.toString(), StandardCharsets.UTF_8);
-    }
-
-    /**
-     * Indice du premier segment qui commence par une majuscule, c'est-à-dire du
-     * nom de la classe englobante (convention Java : paquetages en minuscules).
-     * Ainsi {@code library.service.LoanService.Loan} est rangée dans
-     * {@code library.service}, avec sa classe englobante.
-     */
-    private static int classStart(String qualified) {
-        String[] seg = qualified.split("\\.");
-        int pos = 0;
-        for (String s : seg) {
-            if (!s.isEmpty() && Character.isUpperCase(s.charAt(0))) {
-                return pos;
-            }
-            pos += s.length() + 1;
-        }
-        return qualified.lastIndexOf('.') + 1;
-    }
-
-    /** Paquetage : ce qui précède le nom de la classe (englobante). */
-    private static String packageOf(String qualified) {
-        int start = classStart(qualified);
-        return start == 0 ? "(défaut)" : qualified.substring(0, start - 1);
-    }
-
-    /** Nom affiché : la classe, avec sa classe englobante si elle est interne. */
-    private static String simpleName(String qualified) {
-        return qualified.substring(classStart(qualified));
     }
 
     private static String quote(String s) {

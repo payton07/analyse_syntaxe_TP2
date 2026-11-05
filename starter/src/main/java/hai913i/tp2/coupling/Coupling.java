@@ -157,6 +157,28 @@ public final class Coupling {
         return sum;
     }
 
+    /**
+     * La matrice M × M des couplages, dans l'ordre de {@link #classes()} : la
+     * case [i][j] vaut C(classe i, classe j). Symétrique, diagonale nulle.
+     *
+     * <p>C'est la seule chose que le regroupement reçoit : des indices 0..M−1 et
+     * des nombres, sans aucun nom de classe ni aucun arc.</p>
+     *
+     * @return une nouvelle matrice
+     */
+    public double[][] matrix() {
+        int m = classes.size();
+        double[][] x = new double[m][m];
+        for (int i = 0; i < m; i++) {
+            for (int j = i + 1; j < m; j++) {
+                double v = c(classes.get(i), classes.get(j));
+                x[i][j] = v;
+                x[j][i] = v;
+            }
+        }
+        return x;
+    }
+
     /** @return M (M − 1) / 2, le nombre de couples de classes distinctes */
     public int possiblePairs() {
         int m = classes.size();

@@ -8,12 +8,17 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Map;
 
+import hai913i.tp2.clustering.AverageLinkClustering;
+import hai913i.tp2.clustering.Dendrogram;
+import hai913i.tp2.clustering.Merge;
+import hai913i.tp2.clustering.Similarity;
 import hai913i.tp2.coupling.ClassPair;
 import hai913i.tp2.coupling.Coupling;
 import hai913i.tp2.graph.CouplingGraph;
 import hai913i.tp2.graph.GraphIO;
 import hai913i.tp2.input.FactSource;
 import hai913i.tp2.input.Facts;
+import hai913i.tp2.output.Names;
 
 /**
  * Point d'entrée du squelette : vérifie l'environnement et charge les faits.
@@ -155,13 +160,48 @@ public final class Main {
             return;
         }
 
-        // TODO étape B1 : regroupement hiérarchique ascendant, lien moyen,
-        //                 égalités départagées comme le sujet l'impose.
-        // TODO étape B2 : représenter et exporter le dendrogramme.
+        if (facts.classNames().isEmpty()) {
+            ERR.println("Aucune classe dans le jeu de données : rien à regrouper.");
+            System.exit(2);
+            return;
+        }
+
+        // B1 — regroupement ascendant, lien moyen ; il ne reçoit que la matrice
+        Dendrogram dendrogram = AverageLinkClustering.run(coupling.classes(),
+                Similarity.fromMatrix(coupling.matrix()));
+        printMerges(dendrogram);
+
         // TODO étape B3 : couper l'arbre sous les trois contraintes, puis
         //                 vérifier la contrainte M/2 et signaler sa violation.
         OUT.println();
-        OUT.println("Les étapes B1 à B3 restent à écrire.");
+        OUT.println("L'étape B3 reste à écrire.");
+    }
+
+    /**
+     * Affiche la suite des fusions de l'étape B1 et le contrôle de monotonie.
+     *
+     * @param d le dendrogramme
+     */
+    private static void printMerges(Dendrogram d) {
+        OUT.println();
+        OUT.println("== B1 · Regroupement ascendant (lien moyen) ==");
+        OUT.printf(Locale.ROOT, "Fusions               : %d%n", d.merges().size());
+        OUT.printf(Locale.ROOT, "  %5s  %-8s  %s%n", "étape", "S", "groupe A  +  groupe B  →  nouveau");
+        boolean monotone = true;
+        double previous = Double.POSITIVE_INFINITY;
+        for (Merge m : d.merges()) {
+            OUT.printf(Locale.ROOT, "  %5d  %.4f    G%d %s  +  G%d %s  →  G%d%n",
+                    m.step(), m.similarity(),
+                    m.a().id(), Names.braces(d.labelsOf(m.a())),
+                    m.b().id(), Names.braces(d.labelsOf(m.b())),
+                    m.result().id());
+            if (m.similarity() > previous + AverageLinkClustering.EPS) {
+                monotone = false;
+            }
+            previous = m.similarity();
+        }
+        OUT.println("Similarités           : "
+                + (monotone ? "ne remontent jamais (contrôle OK)" : "ANOMALIE : une similarité remonte"));
     }
 
     /**
