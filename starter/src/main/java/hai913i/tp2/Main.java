@@ -3,12 +3,15 @@ package hai913i.tp2;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Map;
 
 import hai913i.tp2.coupling.ClassPair;
 import hai913i.tp2.coupling.Coupling;
+import hai913i.tp2.graph.CouplingGraph;
+import hai913i.tp2.graph.GraphIO;
 import hai913i.tp2.input.FactSource;
 import hai913i.tp2.input.Facts;
 
@@ -60,6 +63,9 @@ public final class Main {
     /** Seuil de coupe par défaut, repris du point de contrôle B3 du sujet. */
     private static final double CP_DEFAUT = 0.025;
 
+    /** Dossier des exports par défaut (graphe, dendrogramme, modules). */
+    private static final String OUT_DEFAUT = "sorties";
+
     private Main() {
     }
 
@@ -76,6 +82,7 @@ public final class Main {
         Path dir = Path.of(args[0]);
         double cp = CP_DEFAUT;
         String prefix = null;
+        Path out = Path.of(OUT_DEFAUT);
         for (int i = 1; i < args.length; i++) {
             if ("--cp".equals(args[i]) && i + 1 < args.length) {
                 try {
@@ -86,6 +93,8 @@ public final class Main {
                 }
             } else if ("--prefix".equals(args[i]) && i + 1 < args.length) {
                 prefix = args[++i];
+            } else if ("--out".equals(args[i]) && i + 1 < args.length) {
+                out = Path.of(args[++i]);
             } else {
                 usage("argument inconnu : " + args[i]);
                 return;
@@ -130,14 +139,56 @@ public final class Main {
         }
         printCoupling(coupling);
 
-        // TODO étape A2 : construire et exporter le graphe de couplage pondéré.
+        // A2 — graphe de couplage pondéré, exporté puis relu
+        CouplingGraph graph = CouplingGraph.from(coupling);
+        try {
+            Files.createDirectories(out);
+            Path csv = out.resolve("graphe-couplage.csv");
+            Path dot = out.resolve("graphe-couplage.dot");
+            GraphIO.writeCsv(graph, csv);
+            GraphIO.writeDot(graph, dot);
+            CouplingGraph reloaded = GraphIO.readCsv(csv);
+            printGraph(graph, reloaded.equals(graph), csv, dot);
+        } catch (IOException e) {
+            ERR.println("Écriture des exports impossible : " + e.getMessage());
+            System.exit(2);
+            return;
+        }
+
         // TODO étape B1 : regroupement hiérarchique ascendant, lien moyen,
         //                 égalités départagées comme le sujet l'impose.
         // TODO étape B2 : représenter et exporter le dendrogramme.
         // TODO étape B3 : couper l'arbre sous les trois contraintes, puis
         //                 vérifier la contrainte M/2 et signaler sa violation.
         OUT.println();
-        OUT.println("Les étapes A2 à B3 restent à écrire.");
+        OUT.println("Les étapes B1 à B3 restent à écrire.");
+    }
+
+    /**
+     * Affiche le résultat de l'étape A2 : taille du graphe, cinq arêtes les plus
+     * lourdes, classes isolées, fichiers écrits et contrôle de relecture.
+     *
+     * @param g          le graphe
+     * @param reloadedOk vrai si le CSV relu redonne exactement le même graphe
+     * @param csv        export CSV écrit
+     * @param dot        export DOT écrit
+     */
+    private static void printGraph(CouplingGraph g, boolean reloadedOk, Path csv, Path dot) {
+        OUT.println();
+        OUT.println("== A2 · Graphe de couplage pondéré ==");
+        OUT.printf(Locale.ROOT, "Nœuds                 : %d%n", g.nodes().size());
+        OUT.printf(Locale.ROOT, "Arêtes                : %d%n", g.edges().size());
+        OUT.println("Cinq arêtes les plus lourdes :");
+        for (CouplingGraph.Edge e : g.topEdges(5)) {
+            OUT.printf(Locale.ROOT, "  %-34s %-34s %7s  %.4f%n", e.a(), e.b(),
+                    e.r() + "/" + g.interArcs(), e.weight());
+        }
+        OUT.println("Classes isolées       : "
+                + (g.isolated().isEmpty() ? "aucune" : String.join(", ", g.isolated())));
+        OUT.println("Export CSV            : " + csv);
+        OUT.println("Export DOT            : " + dot);
+        OUT.println("Rechargement du CSV   : "
+                + (reloadedOk ? "identique (contrôle OK)" : "ANOMALIE : graphe relu différent"));
     }
 
     /**
@@ -179,7 +230,7 @@ public final class Main {
         ERR.println("Erreur : " + message);
         ERR.println();
         ERR.println("Usage : java -jar hai913i-tp2.jar <dossier-des-faits>"
-                + " [--cp <valeur>] [--prefix <préfixe>]");
+                + " [--cp <valeur>] [--prefix <préfixe>] [--out <dossier>]");
         ERR.println();
         ERR.println("  <dossier-des-faits>  dossier contenant les trois fichiers");
         ERR.println("                       <préfixe>-classes.csv,");
@@ -189,6 +240,8 @@ public final class Main {
                 + " (défaut : " + CP_DEFAUT + ")");
         ERR.println("  --prefix <préfixe>   force le préfixe ; par défaut il est");
         ERR.println("                       déduit du dossier");
+        ERR.println("  --out <dossier>      dossier des exports (défaut : "
+                + OUT_DEFAUT + ")");
         System.exit(1);
     }
 }
