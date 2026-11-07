@@ -5,6 +5,7 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -14,42 +15,49 @@ import hai913i.tp2.clustering.Dendrogram;
 import hai913i.tp2.clustering.Merge;
 import hai913i.tp2.clustering.Similarity;
 import hai913i.tp2.coupling.ClassPair;
+import hai913i.tp2.cut.CutResult;
+import hai913i.tp2.cut.TreeCut;
 import hai913i.tp2.coupling.Coupling;
 import hai913i.tp2.graph.CouplingGraph;
 import hai913i.tp2.graph.GraphIO;
 import hai913i.tp2.input.FactSource;
 import hai913i.tp2.input.Facts;
 import hai913i.tp2.output.DendrogramExport;
+import hai913i.tp2.output.ModulesExport;
 import hai913i.tp2.output.Names;
 
 /**
- * Point d'entrée du squelette : vérifie l'environnement et charge les faits.
+ * Point d'entrée : enchaîne toute la chaîne du TP 2, des faits aux modules.
  *
- * <p><b>Ce qu'il fait.</b> Il lit les arguments de la ligne de commande, charge
- * un jeu de faits au format canonique, et affiche les trois compteurs du
- * <b>point de contrôle A0</b> : nombre de classes, de méthodes, d'arcs du
- * graphe d'appel.</p>
- *
- * <p><b>Ce qu'il ne fait pas.</b> Tout le reste. Le couplage (A1), le graphe
- * pondéré (A2), le regroupement (B1), le dendrogramme (B2) et la coupe (B3)
- * sont l'objet du TP : leurs emplacements sont marqués {@code TODO} ci-dessous,
- * et rien n'en est fourni.</p>
+ * <p><b>Rôle.</b> Lire la ligne de commande, appeler chaque responsabilité dans
+ * l'ordre, afficher les points de contrôle et écrire les exports. Aucun calcul
+ * n'est fait ici : chaque étape vit dans son paquetage.</p>
+ * <ol>
+ *   <li>A0 — {@code input} : les faits, derrière l'interface {@link FactSource} ;</li>
+ *   <li>A1 — {@code coupling} : C(A, B) = r(A, B) / |E_inter| ;</li>
+ *   <li>A2 — {@code graph} : graphe pondéré, exports CSV (relu) et DOT ;</li>
+ *   <li>B1/B2 — {@code clustering} : regroupement ascendant, lien moyen,
+ *       départage des égalités ; {@code output} : arbre indenté, fusions, DOT ;</li>
+ *   <li>B3 — {@code cut} : coupe au(x) seuil(s) CP, contrainte M/2 signalée.</li>
+ * </ol>
  *
  * <pre>
  *   mvn clean package
  *   java -jar target/hai913i-tp2.jar CHEMIN_DU_DOSSIER_DES_FAITS
  *   java -jar target/hai913i-tp2.jar CHEMIN_DU_DOSSIER_DES_FAITS --cp 0.025
+ *   java -jar target/hai913i-tp2.jar CHEMIN_DU_DOSSIER_DES_FAITS --cp 0.015,0.025,0.045
  * </pre>
  *
  * <p>Le dossier passé en argument est celui qui contient les trois fichiers
  * {@code ...-classes.csv}, {@code ...-methods.csv} et {@code ...-calls.csv}.
  * Le préfixe en est déduit : votre outil n'a donc aucune raison de connaître le
  * nom du projet de validation, et il fonctionnera tel quel sur un autre jeu de
- * faits..</p>
+ * faits.</p>
  *
- * <p><b>Codes de sortie</b> : 0 si les faits sont chargés, 1 si les arguments
- * sont invalides, 2 si les fichiers sont illisibles. Gardez cette convention
- * dans votre propre outil : elle fait partie du critère de reproductibilité.</p>
+ * <p><b>Codes de sortie</b> : 0 si la chaîne s'est exécutée (y compris quand
+ * une coupe viole M/2 : c'est un résultat, pas une panne), 1 si les arguments
+ * sont invalides, 2 si les fichiers sont illisibles, incohérents ou si les
+ * exports ne peuvent pas être écrits.</p>
  */
 public final class Main {
 
@@ -77,9 +85,9 @@ public final class Main {
     }
 
     /**
-     * Charge les faits et affiche les compteurs de l'étape A0.
+     * Exécute la chaîne complète, de A0 à B3.
      *
-     * @param args {@code <dossier-des-faits> [--cp <valeur>] [--prefix <préfixe>]}
+     * @param args {@code <dossier-des-faits> [--cp <v1,v2,…>] [--prefix <préfixe>] [--out <dossier>]}
      */
     public static void main(String[] args) {
         if (args.length == 0) {
@@ -87,16 +95,14 @@ public final class Main {
             return;
         }
         Path dir = Path.of(args[0]);
-        double cp = CP_DEFAUT;
+        List<Double> cps = List.of(CP_DEFAUT);
         String prefix = null;
         Path out = Path.of(OUT_DEFAUT);
         for (int i = 1; i < args.length; i++) {
             if ("--cp".equals(args[i]) && i + 1 < args.length) {
-                try {
-                    cp = Double.parseDouble(args[++i]);
-                } catch (NumberFormatException e) {
-                    usage("valeur de --cp invalide : " + args[i]);
-                    return;
+                cps = parseCps(args[++i]);
+                if (cps == null) {
+                    return;                                  // usage() déjà appelé
                 }
             } else if ("--prefix".equals(args[i]) && i + 1 < args.length) {
                 prefix = args[++i];
@@ -106,10 +112,6 @@ public final class Main {
                 usage("argument inconnu : " + args[i]);
                 return;
             }
-        }
-        if (cp < 0.0) {
-            usage("--cp doit être positif ou nul");
-            return;
         }
 
         // A0 — le reste du programme ne voit que l'interface FactSource
@@ -133,7 +135,8 @@ public final class Main {
                 facts.methodOwners().size());
         OUT.printf(Locale.ROOT, "Arcs du graphe      : %d%n",
                 facts.calls().size());
-        OUT.printf(Locale.ROOT, "Seuil CP retenu     : %.4f%n", cp);
+        OUT.println("Seuil(s) CP         : " + String.join(", ",
+                cps.stream().map(ModulesExport::cpLabel).toList()));
 
         // A1 — couplage entre classes
         Coupling coupling;
@@ -189,10 +192,93 @@ public final class Main {
             return;
         }
 
-        // TODO étape B3 : couper l'arbre sous les trois contraintes, puis
-        //                 vérifier la contrainte M/2 et signaler sa violation.
+        // B3 — coupe de l'arbre, pour chaque seuil demandé
+        Similarity sim = Similarity.fromMatrix(coupling.matrix());
+        List<CutResult> cuts = new ArrayList<>();
+        try {
+            for (double cp : cps) {
+                CutResult r = TreeCut.cut(dendrogram, sim, cp);
+                cuts.add(r);
+                List<Path> files = ModulesExport.write(r, dendrogram, graph, out);
+                printCut(r, dendrogram, files);
+            }
+        } catch (IOException e) {
+            ERR.println("Écriture des exports impossible : " + e.getMessage());
+            System.exit(2);
+            return;
+        }
+        if (cuts.size() > 1) {
+            printCutSummary(cuts);
+        }
+    }
+
+    /**
+     * Lit la valeur de {@code --cp} : un seuil, ou plusieurs séparés par des virgules.
+     *
+     * @param text la valeur passée sur la ligne de commande
+     * @return les seuils, dans l'ordre donné ; {@code null} après usage() si invalide
+     */
+    private static List<Double> parseCps(String text) {
+        List<Double> out = new ArrayList<>();
+        for (String part : text.split(",")) {
+            double v;
+            try {
+                v = Double.parseDouble(part.trim());
+            } catch (NumberFormatException e) {
+                usage("valeur de --cp invalide : « " + part.trim() + " »");
+                return null;
+            }
+            if (Double.isNaN(v) || Double.isInfinite(v) || v < 0.0) {
+                usage("--cp doit être un nombre positif ou nul : « " + part.trim() + " »");
+                return null;
+            }
+            out.add(v);
+        }
+        return out;
+    }
+
+    /**
+     * Affiche une coupe de l'étape B3 : modules, taille, couplage interne moyen,
+     * classes, et verdict sur la contrainte M/2.
+     *
+     * @param r     la coupe
+     * @param d     le dendrogramme
+     * @param files les exports écrits
+     */
+    private static void printCut(CutResult r, Dendrogram d, List<Path> files) {
         OUT.println();
-        OUT.println("L'étape B3 reste à écrire.");
+        OUT.println("== B3 · Modules à CP = " + ModulesExport.cpLabel(r.cp()) + " ==");
+        OUT.printf(Locale.ROOT, "  %-4s %-5s %6s  %-8s %s%n", "", "nœud", "taille", "C̄(G)", "classes");
+        int k = 1;
+        for (CutResult.Module m : r.modules()) {
+            OUT.printf(Locale.ROOT, "  M%-3d G%-4d %6d  %-8s %s%n", k++, m.cluster().id(), m.size(),
+                    Double.isNaN(m.internalCoupling()) ? "—" : String.format(Locale.ROOT, "%.4f", m.internalCoupling()),
+                    Names.braces(d.labelsOf(m.cluster())));
+        }
+        OUT.printf(Locale.ROOT, "Modules               : %d (plafond M/2 = %d)%n",
+                r.modules().size(), r.maxModules());
+        OUT.println("Contrainte M/2        : " + (r.respectsMaxModules()
+                ? "respectée"
+                : "VIOLÉE — coupe rejetée : avec ce seuil, les contraintes sont incompatibles"));
+        for (Path f : files) {
+            OUT.println("Export                : " + f);
+        }
+    }
+
+    /**
+     * Tableau récapitulatif quand plusieurs seuils ont été demandés.
+     *
+     * @param cuts les coupes, dans l'ordre des seuils
+     */
+    private static void printCutSummary(List<CutResult> cuts) {
+        OUT.println();
+        OUT.println("== B3 · Récapitulatif des seuils ==");
+        OUT.printf(Locale.ROOT, "  %-8s %8s %13s  %s%n", "CP", "modules", "plus gros", "contrainte M/2");
+        for (CutResult r : cuts) {
+            OUT.printf(Locale.ROOT, "  %-8s %8d %13d  %s%n", ModulesExport.cpLabel(r.cp()),
+                    r.modules().size(), r.largestModuleSize(),
+                    r.respectsMaxModules() ? "respectée" : "VIOLÉE (rejetée)");
+        }
     }
 
     /**
@@ -288,14 +374,14 @@ public final class Main {
         ERR.println("Erreur : " + message);
         ERR.println();
         ERR.println("Usage : java -jar hai913i-tp2.jar <dossier-des-faits>"
-                + " [--cp <valeur>] [--prefix <préfixe>] [--out <dossier>]");
+                + " [--cp <v1,v2,…>] [--prefix <préfixe>] [--out <dossier>]");
         ERR.println();
         ERR.println("  <dossier-des-faits>  dossier contenant les trois fichiers");
         ERR.println("                       <préfixe>-classes.csv,");
         ERR.println("                       <préfixe>-methods.csv et");
         ERR.println("                       <préfixe>-calls.csv");
-        ERR.println("  --cp <valeur>        seuil de couplage interne moyen"
-                + " (défaut : " + CP_DEFAUT + ")");
+        ERR.println("  --cp <v1,v2,…>       seuil(s) de couplage interne moyen, séparés");
+        ERR.println("                       par des virgules (défaut : " + CP_DEFAUT + ")");
         ERR.println("  --prefix <préfixe>   force le préfixe ; par défaut il est");
         ERR.println("                       déduit du dossier");
         ERR.println("  --out <dossier>      dossier des exports (défaut : "
