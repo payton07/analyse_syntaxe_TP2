@@ -1,0 +1,598 @@
+{
+ "schema": "hai913i-tp2-facts/1",
+ "project": "validation",
+ "description": "Faits extraits du projet de validation du TP 1 : 15 classes, 59 methodes, 44 arcs du graphe d'appel. Format neutre, independant de tout outil d'analyse.",
+ "counts": {
+  "classes": 15,
+  "methods": 59,
+  "callArcs": 44,
+  "callSitesTotal": 46,
+  "interClassCallArcs": 37,
+  "interClassCallSites": 38
+ },
+ "classes": [
+  {
+   "name": "library.app.LibraryApp",
+   "simpleName": "LibraryApp",
+   "package": "library.app"
+  },
+  {
+   "name": "library.model.Book",
+   "simpleName": "Book",
+   "package": "library.model"
+  },
+  {
+   "name": "library.model.Category",
+   "simpleName": "Category",
+   "package": "library.model"
+  },
+  {
+   "name": "library.model.Dvd",
+   "simpleName": "Dvd",
+   "package": "library.model"
+  },
+  {
+   "name": "library.model.Item",
+   "simpleName": "Item",
+   "package": "library.model"
+  },
+  {
+   "name": "library.model.Loanable",
+   "simpleName": "Loanable",
+   "package": "library.model"
+  },
+  {
+   "name": "library.model.Member",
+   "simpleName": "Member",
+   "package": "library.model"
+  },
+  {
+   "name": "library.service.Catalog",
+   "simpleName": "Catalog",
+   "package": "library.service"
+  },
+  {
+   "name": "library.service.ConsoleNotifier",
+   "simpleName": "ConsoleNotifier",
+   "package": "library.service"
+  },
+  {
+   "name": "library.service.LoanException",
+   "simpleName": "LoanException",
+   "package": "library.service"
+  },
+  {
+   "name": "library.service.LoanService",
+   "simpleName": "LoanService",
+   "package": "library.service"
+  },
+  {
+   "name": "library.service.LoanService.Loan",
+   "simpleName": "Loan",
+   "package": "library.service.LoanService"
+  },
+  {
+   "name": "library.service.Notifier",
+   "simpleName": "Notifier",
+   "package": "library.service"
+  },
+  {
+   "name": "library.util.Statistics",
+   "simpleName": "Statistics",
+   "package": "library.util"
+  },
+  {
+   "name": "library.util.TextUtils",
+   "simpleName": "TextUtils",
+   "package": "library.util"
+  }
+ ],
+ "methods": [
+  {
+   "id": "library.app.LibraryApp#main(java.lang.String[])",
+   "owner": "library.app.LibraryApp"
+  },
+  {
+   "id": "library.app.LibraryApp#run(library.service.LoanService,library.model.Member,java.util.List)",
+   "owner": "library.app.LibraryApp"
+  },
+  {
+   "id": "library.model.Book#Book(java.lang.String,java.lang.String,java.lang.String,int)",
+   "owner": "library.model.Book"
+  },
+  {
+   "id": "library.model.Book#dailyRate()",
+   "owner": "library.model.Book"
+  },
+  {
+   "id": "library.model.Book#describe()",
+   "owner": "library.model.Book"
+  },
+  {
+   "id": "library.model.Book#getAuthor()",
+   "owner": "library.model.Book"
+  },
+  {
+   "id": "library.model.Book#getPages()",
+   "owner": "library.model.Book"
+  },
+  {
+   "id": "library.model.Category#Category(java.lang.String)",
+   "owner": "library.model.Category"
+  },
+  {
+   "id": "library.model.Category#getLabel()",
+   "owner": "library.model.Category"
+  },
+  {
+   "id": "library.model.Dvd#Dvd(java.lang.String,java.lang.String,int)",
+   "owner": "library.model.Dvd"
+  },
+  {
+   "id": "library.model.Dvd#dailyRate()",
+   "owner": "library.model.Dvd"
+  },
+  {
+   "id": "library.model.Dvd#getMinutes()",
+   "owner": "library.model.Dvd"
+  },
+  {
+   "id": "library.model.Item#Item(java.lang.String,java.lang.String,library.model.Category)",
+   "owner": "library.model.Item"
+  },
+  {
+   "id": "library.model.Item#checkOut(library.model.Member)",
+   "owner": "library.model.Item"
+  },
+  {
+   "id": "library.model.Item#dailyRate()",
+   "owner": "library.model.Item"
+  },
+  {
+   "id": "library.model.Item#describe()",
+   "owner": "library.model.Item"
+  },
+  {
+   "id": "library.model.Item#fee(int)",
+   "owner": "library.model.Item"
+  },
+  {
+   "id": "library.model.Item#getCategory()",
+   "owner": "library.model.Item"
+  },
+  {
+   "id": "library.model.Item#getId()",
+   "owner": "library.model.Item"
+  },
+  {
+   "id": "library.model.Item#getTitle()",
+   "owner": "library.model.Item"
+  },
+  {
+   "id": "library.model.Item#giveBack()",
+   "owner": "library.model.Item"
+  },
+  {
+   "id": "library.model.Item#isAvailable()",
+   "owner": "library.model.Item"
+  },
+  {
+   "id": "library.model.Loanable#checkOut(library.model.Member)",
+   "owner": "library.model.Loanable"
+  },
+  {
+   "id": "library.model.Loanable#fee(int)",
+   "owner": "library.model.Loanable"
+  },
+  {
+   "id": "library.model.Loanable#giveBack()",
+   "owner": "library.model.Loanable"
+  },
+  {
+   "id": "library.model.Loanable#isAvailable()",
+   "owner": "library.model.Loanable"
+  },
+  {
+   "id": "library.model.Member#Member(java.lang.String)",
+   "owner": "library.model.Member"
+  },
+  {
+   "id": "library.model.Member#addLoan(library.model.Item)",
+   "owner": "library.model.Member"
+  },
+  {
+   "id": "library.model.Member#getLoans()",
+   "owner": "library.model.Member"
+  },
+  {
+   "id": "library.model.Member#getName()",
+   "owner": "library.model.Member"
+  },
+  {
+   "id": "library.model.Member#loanCount()",
+   "owner": "library.model.Member"
+  },
+  {
+   "id": "library.model.Member#removeLoan(library.model.Item)",
+   "owner": "library.model.Member"
+  },
+  {
+   "id": "library.service.Catalog#add(library.model.Item)",
+   "owner": "library.service.Catalog"
+  },
+  {
+   "id": "library.service.Catalog#add(library.model.Item,library.model.Item)",
+   "owner": "library.service.Catalog"
+  },
+  {
+   "id": "library.service.Catalog#available()",
+   "owner": "library.service.Catalog"
+  },
+  {
+   "id": "library.service.Catalog#findById(java.lang.String)",
+   "owner": "library.service.Catalog"
+  },
+  {
+   "id": "library.service.Catalog#size()",
+   "owner": "library.service.Catalog"
+  },
+  {
+   "id": "library.service.ConsoleNotifier#getSent()",
+   "owner": "library.service.ConsoleNotifier"
+  },
+  {
+   "id": "library.service.ConsoleNotifier#send(library.model.Member,java.lang.String)",
+   "owner": "library.service.ConsoleNotifier"
+  },
+  {
+   "id": "library.service.LoanException#LoanException(java.lang.String)",
+   "owner": "library.service.LoanException"
+  },
+  {
+   "id": "library.service.LoanService#LoanService(library.service.Catalog,library.service.Notifier)",
+   "owner": "library.service.LoanService"
+  },
+  {
+   "id": "library.service.LoanService#borrow(library.model.Member,java.lang.String,int)",
+   "owner": "library.service.LoanService"
+  },
+  {
+   "id": "library.service.LoanService#getHistory()",
+   "owner": "library.service.LoanService"
+  },
+  {
+   "id": "library.service.LoanService#getRefusals()",
+   "owner": "library.service.LoanService"
+  },
+  {
+   "id": "library.service.LoanService#giveBack(library.service.LoanService.Loan)",
+   "owner": "library.service.LoanService"
+  },
+  {
+   "id": "library.service.LoanService#totalFees()",
+   "owner": "library.service.LoanService"
+  },
+  {
+   "id": "library.service.LoanService.Loan#Loan(library.model.Item,library.model.Member,int)",
+   "owner": "library.service.LoanService.Loan"
+  },
+  {
+   "id": "library.service.LoanService.Loan#getDays()",
+   "owner": "library.service.LoanService.Loan"
+  },
+  {
+   "id": "library.service.LoanService.Loan#getItem()",
+   "owner": "library.service.LoanService.Loan"
+  },
+  {
+   "id": "library.service.LoanService.Loan#getMember()",
+   "owner": "library.service.LoanService.Loan"
+  },
+  {
+   "id": "library.service.Notifier#send(library.model.Member,java.lang.String)",
+   "owner": "library.service.Notifier"
+  },
+  {
+   "id": "library.util.Statistics#max(double,double)",
+   "owner": "library.util.Statistics"
+  },
+  {
+   "id": "library.util.Statistics#mean(java.util.List)",
+   "owner": "library.util.Statistics"
+  },
+  {
+   "id": "library.util.Statistics#report(java.lang.String,int,int,double,int)",
+   "owner": "library.util.Statistics"
+  },
+  {
+   "id": "library.util.TextUtils#TextUtils()",
+   "owner": "library.util.TextUtils"
+  },
+  {
+   "id": "library.util.TextUtils#capitalize(java.lang.String)",
+   "owner": "library.util.TextUtils"
+  },
+  {
+   "id": "library.util.TextUtils#pad(java.lang.String,int)",
+   "owner": "library.util.TextUtils"
+  },
+  {
+   "id": "library.util.TextUtils#pad(java.lang.String,int,char)",
+   "owner": "library.util.TextUtils"
+  },
+  {
+   "id": "library.util.TextUtils#repeat(java.lang.String,int)",
+   "owner": "library.util.TextUtils"
+  }
+ ],
+ "calls": [
+  {
+   "caller": "library.app.LibraryApp#main(java.lang.String[])",
+   "callee": "library.app.LibraryApp#run(library.service.LoanService,library.model.Member,java.util.List)",
+   "sites": 1
+  },
+  {
+   "caller": "library.app.LibraryApp#main(java.lang.String[])",
+   "callee": "library.model.Book#describe()",
+   "sites": 1
+  },
+  {
+   "caller": "library.app.LibraryApp#main(java.lang.String[])",
+   "callee": "library.model.Item#getTitle()",
+   "sites": 1
+  },
+  {
+   "caller": "library.app.LibraryApp#main(java.lang.String[])",
+   "callee": "library.service.Catalog#add(library.model.Item)",
+   "sites": 1
+  },
+  {
+   "caller": "library.app.LibraryApp#main(java.lang.String[])",
+   "callee": "library.service.Catalog#add(library.model.Item,library.model.Item)",
+   "sites": 1
+  },
+  {
+   "caller": "library.app.LibraryApp#main(java.lang.String[])",
+   "callee": "library.service.Catalog#size()",
+   "sites": 1
+  },
+  {
+   "caller": "library.app.LibraryApp#main(java.lang.String[])",
+   "callee": "library.service.LoanService#getRefusals()",
+   "sites": 1
+  },
+  {
+   "caller": "library.app.LibraryApp#main(java.lang.String[])",
+   "callee": "library.service.LoanService#totalFees()",
+   "sites": 1
+  },
+  {
+   "caller": "library.app.LibraryApp#main(java.lang.String[])",
+   "callee": "library.util.Statistics#report(java.lang.String,int,int,double,int)",
+   "sites": 1
+  },
+  {
+   "caller": "library.app.LibraryApp#run(library.service.LoanService,library.model.Member,java.util.List)",
+   "callee": "library.model.Item#describe()",
+   "sites": 1
+  },
+  {
+   "caller": "library.app.LibraryApp#run(library.service.LoanService,library.model.Member,java.util.List)",
+   "callee": "library.model.Item#fee(int)",
+   "sites": 1
+  },
+  {
+   "caller": "library.app.LibraryApp#run(library.service.LoanService,library.model.Member,java.util.List)",
+   "callee": "library.service.LoanService#borrow(library.model.Member,java.lang.String,int)",
+   "sites": 1
+  },
+  {
+   "caller": "library.app.LibraryApp#run(library.service.LoanService,library.model.Member,java.util.List)",
+   "callee": "library.service.LoanService.Loan#getDays()",
+   "sites": 1
+  },
+  {
+   "caller": "library.app.LibraryApp#run(library.service.LoanService,library.model.Member,java.util.List)",
+   "callee": "library.service.LoanService.Loan#getItem()",
+   "sites": 1
+  },
+  {
+   "caller": "library.model.Book#describe()",
+   "callee": "library.model.Item#describe()",
+   "sites": 1
+  },
+  {
+   "caller": "library.model.Item#checkOut(library.model.Member)",
+   "callee": "library.model.Item#isAvailable()",
+   "sites": 1
+  },
+  {
+   "caller": "library.model.Item#checkOut(library.model.Member)",
+   "callee": "library.model.Member#addLoan(library.model.Item)",
+   "sites": 1
+  },
+  {
+   "caller": "library.model.Item#describe()",
+   "callee": "library.model.Category#getLabel()",
+   "sites": 1
+  },
+  {
+   "caller": "library.model.Item#fee(int)",
+   "callee": "library.model.Item#dailyRate()",
+   "sites": 1
+  },
+  {
+   "caller": "library.model.Item#giveBack()",
+   "callee": "library.model.Member#removeLoan(library.model.Item)",
+   "sites": 1
+  },
+  {
+   "caller": "library.service.Catalog#add(library.model.Item,library.model.Item)",
+   "callee": "library.service.Catalog#add(library.model.Item)",
+   "sites": 2
+  },
+  {
+   "caller": "library.service.Catalog#available()",
+   "callee": "library.model.Item#isAvailable()",
+   "sites": 1
+  },
+  {
+   "caller": "library.service.Catalog#findById(java.lang.String)",
+   "callee": "library.model.Item#getId()",
+   "sites": 1
+  },
+  {
+   "caller": "library.service.ConsoleNotifier#send(library.model.Member,java.lang.String)",
+   "callee": "library.model.Member#getName()",
+   "sites": 1
+  },
+  {
+   "caller": "library.service.LoanService#borrow(library.model.Member,java.lang.String,int)",
+   "callee": "library.model.Item#getTitle()",
+   "sites": 1
+  },
+  {
+   "caller": "library.service.LoanService#borrow(library.model.Member,java.lang.String,int)",
+   "callee": "library.model.Loanable#checkOut(library.model.Member)",
+   "sites": 1
+  },
+  {
+   "caller": "library.service.LoanService#borrow(library.model.Member,java.lang.String,int)",
+   "callee": "library.model.Member#getName()",
+   "sites": 1
+  },
+  {
+   "caller": "library.service.LoanService#borrow(library.model.Member,java.lang.String,int)",
+   "callee": "library.model.Member#loanCount()",
+   "sites": 1
+  },
+  {
+   "caller": "library.service.LoanService#borrow(library.model.Member,java.lang.String,int)",
+   "callee": "library.service.Catalog#findById(java.lang.String)",
+   "sites": 1
+  },
+  {
+   "caller": "library.service.LoanService#borrow(library.model.Member,java.lang.String,int)",
+   "callee": "library.service.Notifier#send(library.model.Member,java.lang.String)",
+   "sites": 1
+  },
+  {
+   "caller": "library.service.LoanService#borrow(library.model.Member,java.lang.String,int)",
+   "callee": "library.util.TextUtils#capitalize(java.lang.String)",
+   "sites": 1
+  },
+  {
+   "caller": "library.service.LoanService#giveBack(library.service.LoanService.Loan)",
+   "callee": "library.model.Item#getTitle()",
+   "sites": 1
+  },
+  {
+   "caller": "library.service.LoanService#giveBack(library.service.LoanService.Loan)",
+   "callee": "library.model.Item#giveBack()",
+   "sites": 1
+  },
+  {
+   "caller": "library.service.LoanService#giveBack(library.service.LoanService.Loan)",
+   "callee": "library.service.LoanService.Loan#getItem()",
+   "sites": 2
+  },
+  {
+   "caller": "library.service.LoanService#giveBack(library.service.LoanService.Loan)",
+   "callee": "library.service.LoanService.Loan#getMember()",
+   "sites": 1
+  },
+  {
+   "caller": "library.service.LoanService#giveBack(library.service.LoanService.Loan)",
+   "callee": "library.service.Notifier#send(library.model.Member,java.lang.String)",
+   "sites": 1
+  },
+  {
+   "caller": "library.service.LoanService#totalFees()",
+   "callee": "library.model.Item#fee(int)",
+   "sites": 1
+  },
+  {
+   "caller": "library.service.LoanService#totalFees()",
+   "callee": "library.service.LoanService.Loan#getDays()",
+   "sites": 1
+  },
+  {
+   "caller": "library.service.LoanService#totalFees()",
+   "callee": "library.service.LoanService.Loan#getItem()",
+   "sites": 1
+  },
+  {
+   "caller": "library.util.Statistics#report(java.lang.String,int,int,double,int)",
+   "callee": "library.util.TextUtils#pad(java.lang.String,int)",
+   "sites": 1
+  },
+  {
+   "caller": "library.util.Statistics#report(java.lang.String,int,int,double,int)",
+   "callee": "library.util.TextUtils#repeat(java.lang.String,int)",
+   "sites": 1
+  },
+  {
+   "caller": "library.util.TextUtils#pad(java.lang.String,int)",
+   "callee": "library.util.TextUtils#pad(java.lang.String,int,char)",
+   "sites": 1
+  },
+  {
+   "caller": "library.util.TextUtils#pad(java.lang.String,int,char)",
+   "callee": "library.util.TextUtils#repeat(java.lang.String,int)",
+   "sites": 1
+  },
+  {
+   "caller": "library.util.TextUtils#repeat(java.lang.String,int)",
+   "callee": "library.util.TextUtils#repeat(java.lang.String,int)",
+   "sites": 1
+  }
+ ],
+ "extra": {
+  "note": "Facultatif : non utilise par le coeur du TP 2. Sert au bonus qui enrichit la relation de dependance.",
+  "inheritance": [
+   {
+    "type": "library.model.Book",
+    "superclasses": [
+     "library.model.Item"
+    ],
+    "interfaces": []
+   },
+   {
+    "type": "library.model.Category",
+    "superclasses": [
+     "java.lang.Enum"
+    ],
+    "interfaces": []
+   },
+   {
+    "type": "library.model.Dvd",
+    "superclasses": [
+     "library.model.Item"
+    ],
+    "interfaces": []
+   },
+   {
+    "type": "library.model.Item",
+    "superclasses": [],
+    "interfaces": [
+     "library.model.Loanable"
+    ]
+   },
+   {
+    "type": "library.service.ConsoleNotifier",
+    "superclasses": [],
+    "interfaces": [
+     "library.service.Notifier"
+    ]
+   },
+   {
+    "type": "library.service.LoanException",
+    "superclasses": [
+     "java.lang.Exception",
+     "java.lang.Throwable"
+    ],
+    "interfaces": []
+   }
+  ]
+ }
+}
