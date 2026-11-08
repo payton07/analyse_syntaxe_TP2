@@ -1,5 +1,6 @@
 package hai913i.tp2;
 
+import java.awt.GraphicsEnvironment;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -22,6 +23,8 @@ import hai913i.tp2.cut.TreeCut;
 import hai913i.tp2.coupling.Coupling;
 import hai913i.tp2.graph.CouplingGraph;
 import hai913i.tp2.graph.GraphIO;
+import hai913i.tp2.gui.ExplorerModel;
+import hai913i.tp2.gui.ExplorerWindow;
 import hai913i.tp2.input.FactSource;
 import hai913i.tp2.input.Facts;
 import hai913i.tp2.input.Inheritance;
@@ -103,6 +106,7 @@ public final class Main {
         Path out = Path.of(OUT_DEFAUT);
         Linkage linkage = Linkage.MOYEN;
         boolean heritage = false;
+        boolean gui = false;
         for (int i = 1; i < args.length; i++) {
             if ("--cp".equals(args[i]) && i + 1 < args.length) {
                 cps = parseCps(args[++i]);
@@ -113,6 +117,8 @@ public final class Main {
                 prefix = args[++i];
             } else if ("--out".equals(args[i]) && i + 1 < args.length) {
                 out = Path.of(args[++i]);
+            } else if ("--gui".equals(args[i])) {
+                gui = true;
             } else if ("--heritage".equals(args[i])) {
                 heritage = true;
             } else if ("--lien".equals(args[i]) && i + 1 < args.length) {
@@ -148,6 +154,11 @@ public final class Main {
         } catch (IOException e) {
             ERR.println("Lecture de l'héritage impossible : " + e.getMessage());
             System.exit(2);
+            return;
+        }
+
+        if (gui) {
+            openGui(facts, dir, prefix, cps.get(0));
             return;
         }
 
@@ -252,6 +263,34 @@ public final class Main {
             }
             printHeritageComparison(plainCuts, plainTree, cuts, dendrogram);
         }
+    }
+
+    /**
+     * Bonus C3 : ouvre l'interface graphique au lieu d'afficher la chaîne.
+     *
+     * <p>L'héritage est facultatif ici : si le JSON manque ou ne se lit pas, on
+     * ouvre quand même la fenêtre, avec la case « héritage » désactivée.</p>
+     *
+     * @param facts  les faits chargés
+     * @param dir    dossier des faits
+     * @param prefix préfixe du jeu de données
+     * @param cp     le seuil affiché au départ
+     */
+    private static void openGui(FactSource facts, Path dir, String prefix, double cp) {
+        if (GraphicsEnvironment.isHeadless()) {
+            ERR.println("Interface graphique impossible : aucun écran disponible (mode headless).");
+            System.exit(2);
+            return;
+        }
+        List<Inheritance.Link> links = null;
+        try {
+            links = Inheritance.load(Inheritance.jsonFile(dir, prefix));
+        } catch (IOException e) {
+            OUT.println("Héritage indisponible dans l'interface : " + e.getMessage());
+        }
+        OUT.println("Ouverture de l'interface graphique (" + prefix + ", CP = "
+                + ModulesExport.cpLabel(cp) + ")…");
+        ExplorerWindow.open(new ExplorerModel(facts, links, cp), prefix);
     }
 
     /**
@@ -495,7 +534,7 @@ public final class Main {
         ERR.println();
         ERR.println("Usage : java -jar hai913i-tp2.jar <dossier-des-faits>"
                 + " [--cp <v1,v2,…>] [--prefix <préfixe>] [--out <dossier>]"
-                + " [--lien moyen|simple] [--heritage]");
+                + " [--lien moyen|simple] [--heritage] [--gui]");
         ERR.println();
         ERR.println("  <dossier-des-faits>  dossier contenant les trois fichiers");
         ERR.println("                       <préfixe>-classes.csv,");
@@ -511,6 +550,8 @@ public final class Main {
         ERR.println("                       simple, compare aussi les deux arbres (bonus C1)");
         ERR.println("  --heritage           ajoute l'héritage lu dans <préfixe>.json et");
         ERR.println("                       compare les modules obtenus (bonus C2)");
+        ERR.println("  --gui                ouvre l'interface graphique (bonus C3) ; CP de");
+        ERR.println("                       départ = premier seuil de --cp");
         System.exit(1);
     }
 }
