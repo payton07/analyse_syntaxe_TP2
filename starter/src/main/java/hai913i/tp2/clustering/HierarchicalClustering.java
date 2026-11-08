@@ -5,7 +5,8 @@ import java.util.List;
 import java.util.TreeMap;
 
 /**
- * Regroupement hiérarchique ascendant, lien moyen (étapes B1 et B2).
+ * Regroupement hiérarchique ascendant (étapes B1 et B2), au lien moyen par
+ * défaut, ou au lien simple pour le bonus C1 (voir {@link Linkage}).
  *
  * <p><b>Algorithme.</b> Au départ, chaque classe forme un groupe. Tant qu'il
  * reste au moins deux groupes actifs, on fusionne les deux plus similaires. On
@@ -26,12 +27,23 @@ import java.util.TreeMap;
  * <p>Complexité de l'ordre de M³ lectures de similarité : négligeable pour M = 15,
  * et c'est la version la plus simple à vérifier (annexe § 8).</p>
  */
-public final class AverageLinkClustering {
+public final class HierarchicalClustering {
 
     /** Tolérance de comparaison des similarités (§ 5.4 : jamais d'égalité stricte). */
     public static final double EPS = 1e-9;
 
-    private AverageLinkClustering() {
+    private HierarchicalClustering() {
+    }
+
+    /**
+     * Construit le dendrogramme au lien moyen, le critère imposé par le sujet.
+     *
+     * @param labels libellés des M classes
+     * @param sim    similarité entre classes, indexée de 0 à M − 1
+     * @return l'arbre et les M − 1 fusions
+     */
+    public static Dendrogram run(List<String> labels, Similarity sim) {
+        return run(labels, sim, Linkage.MOYEN);
     }
 
     /**
@@ -39,11 +51,12 @@ public final class AverageLinkClustering {
      *
      * @param labels libellés des M classes (pour la restitution seulement) ;
      *               l'indice i de la liste est l'identifiant de la feuille i
-     * @param sim    similarité entre classes, indexée de 0 à M − 1
+     * @param sim     similarité entre classes, indexée de 0 à M − 1
+     * @param linkage critère de liaison entre groupes
      * @return l'arbre et les M − 1 fusions
      * @throws IllegalArgumentException s'il n'y a aucune classe
      */
-    public static Dendrogram run(List<String> labels, Similarity sim) {
+    public static Dendrogram run(List<String> labels, Similarity sim, Linkage linkage) {
         int m = labels.size();
         if (m == 0) {
             throw new IllegalArgumentException("aucune classe à regrouper");
@@ -62,7 +75,7 @@ public final class AverageLinkClustering {
             double best = Double.NEGATIVE_INFINITY;
             for (int i = 0; i < groups.size(); i++) {
                 for (int j = i + 1; j < groups.size(); j++) {
-                    double s = averageLink(groups.get(i), groups.get(j), sim);
+                    double s = linkage.between(groups.get(i), groups.get(j), sim);
                     if (bestA == null || s > best + EPS) {   // on ne remplace que si c'est strictement meilleur
                         best = s;
                         bestA = groups.get(i);
@@ -89,12 +102,6 @@ public final class AverageLinkClustering {
      * @return S(g1, g2) = somme des C(a, b) / (|g1| · |g2|)
      */
     public static double averageLink(Cluster g1, Cluster g2, Similarity sim) {
-        double sum = 0.0;
-        for (int a : g1.members()) {
-            for (int b : g2.members()) {
-                sum += sim.of(a, b);
-            }
-        }
-        return sum / ((double) g1.size() * g2.size());   // on divise par TOUS les couples, nuls compris
+        return Linkage.MOYEN.between(g1, g2, sim);
     }
 }

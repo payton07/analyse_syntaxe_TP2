@@ -11,7 +11,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import hai913i.tp2.clustering.AverageLinkClustering;
+import hai913i.tp2.clustering.HierarchicalClustering;
 import hai913i.tp2.clustering.Dendrogram;
 import hai913i.tp2.clustering.Similarity;
 import hai913i.tp2.coupling.Coupling;
@@ -22,7 +22,7 @@ class DendrogramExportTest {
 
     private static Dendrogram mini() throws IOException {
         Coupling c = Coupling.from(Facts.load(Path.of("src", "test", "resources"), "facts-mini"));
-        return AverageLinkClustering.run(c.classes(), Similarity.fromMatrix(c.matrix()));
+        return HierarchicalClustering.run(c.classes(), Similarity.fromMatrix(c.matrix()));
     }
 
     @Test

@@ -58,7 +58,24 @@ public final class ModulesExport {
      */
     public static List<Path> write(CutResult r, Dendrogram d, CouplingGraph g, Path dir)
             throws IOException {
-        String base = "modules-cp" + cpLabel(r.cp());
+        return write(r, d, g, dir, "");
+    }
+
+    /**
+     * Même chose, avec un suffixe dans le nom des fichiers pour les variantes
+     * des bonus : {@code modules-cp0.025-simple.csv}.
+     *
+     * @param r      la coupe
+     * @param d      le dendrogramme
+     * @param g      le graphe de couplage
+     * @param dir    dossier de destination (doit exister)
+     * @param suffix suffixe, vide pour les noms de base
+     * @return les deux fichiers écrits
+     * @throws IOException en cas d'erreur d'écriture
+     */
+    public static List<Path> write(CutResult r, Dendrogram d, CouplingGraph g, Path dir,
+                                   String suffix) throws IOException {
+        String base = "modules-cp" + cpLabel(r.cp()) + suffix;
         Path csv = dir.resolve(base + ".csv");
         Path dot = dir.resolve(base + ".dot");
         Files.writeString(csv, csv(r, d), StandardCharsets.UTF_8);
