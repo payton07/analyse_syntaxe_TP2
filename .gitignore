@@ -10,7 +10,6 @@ plantuml/
 
 # Livrables hors dépôt
 *.zip
-video/
 liens.txt
 
 # Sorties générées (reproductibles avec le jar)
