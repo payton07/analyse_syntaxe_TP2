@@ -45,13 +45,34 @@ public final class DendrogramExport {
      * @throws IOException en cas d'erreur d'écriture
      */
     public static List<Path> writeAll(Dendrogram d, Path dir) throws IOException {
-        Path tree = dir.resolve(TREE_FILE);
-        Path merges = dir.resolve(MERGES_FILE);
-        Path dot = dir.resolve(DOT_FILE);
+        return writeAll(d, dir, "");
+    }
+
+    /**
+     * Écrit les trois exports avec un suffixe dans le nom des fichiers. On s'en
+     * sert pour les variantes des bonus, sans écraser les sorties de référence :
+     * {@code -simple} donne {@code dendrogramme-simple.txt}, etc.
+     *
+     * @param d      le dendrogramme
+     * @param dir    dossier de destination (doit exister)
+     * @param suffix suffixe ajouté avant l'extension, vide pour les noms de base
+     * @return les trois fichiers écrits
+     * @throws IOException en cas d'erreur d'écriture
+     */
+    public static List<Path> writeAll(Dendrogram d, Path dir, String suffix) throws IOException {
+        Path tree = dir.resolve(withSuffix(TREE_FILE, suffix));
+        Path merges = dir.resolve(withSuffix(MERGES_FILE, suffix));
+        Path dot = dir.resolve(withSuffix(DOT_FILE, suffix));
         Files.writeString(tree, indentedTree(d), StandardCharsets.UTF_8);
         Files.writeString(merges, mergesCsv(d), StandardCharsets.UTF_8);
         Files.writeString(dot, dot(d), StandardCharsets.UTF_8);
         return List.of(tree, merges, dot);
+    }
+
+    /** On insère le suffixe juste avant l'extension : fusions.csv → fusions-simple.csv. */
+    private static String withSuffix(String file, String suffix) {
+        int dot = file.lastIndexOf('.');
+        return file.substring(0, dot) + suffix + file.substring(dot);
     }
 
     // ------------------------------------------------------------ arbre indenté

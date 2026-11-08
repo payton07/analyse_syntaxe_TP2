@@ -33,7 +33,7 @@ class AverageLinkClusteringTest {
     }
 
     private static Dendrogram run(Coupling c) {
-        return AverageLinkClustering.run(c.classes(), Similarity.fromMatrix(c.matrix()));
+        return HierarchicalClustering.run(c.classes(), Similarity.fromMatrix(c.matrix()));
     }
 
     private static List<String> labels(int m) {
@@ -71,7 +71,7 @@ class AverageLinkClusteringTest {
         x[1][3] = x[3][1] = 0.25;
         x[2][3] = x[3][2] = 0.25;
         x[0][1] = x[1][0] = 0.10;
-        Merge first = AverageLinkClustering.run(labels(4), Similarity.fromMatrix(x)).merges().get(0);
+        Merge first = HierarchicalClustering.run(labels(4), Similarity.fromMatrix(x)).merges().get(0);
         assertEquals(0, first.a().id());
         assertEquals(2, first.b().id());
     }
@@ -82,7 +82,7 @@ class AverageLinkClusteringTest {
         double[][] x = new double[4][4];
         x[0][3] = x[3][0] = 0.5;
         x[0][2] = x[2][0] = 0.5;
-        Merge first = AverageLinkClustering.run(labels(4), Similarity.fromMatrix(x)).merges().get(0);
+        Merge first = HierarchicalClustering.run(labels(4), Similarity.fromMatrix(x)).merges().get(0);
         assertEquals(0, first.a().id());
         assertEquals(2, first.b().id());
     }
@@ -93,7 +93,7 @@ class AverageLinkClusteringTest {
         double[][] x = new double[3][3];
         x[1][2] = x[2][1] = (0 + 2.0 / 37) / 2;
         x[0][1] = x[1][0] = 1.0 / 37;
-        Merge first = AverageLinkClustering.run(labels(3), Similarity.fromMatrix(x)).merges().get(0);
+        Merge first = HierarchicalClustering.run(labels(3), Similarity.fromMatrix(x)).merges().get(0);
         assertEquals(0, first.a().id());     // (0,1) gagne le départage, quel que soit le dernier bit
         assertEquals(1, first.b().id());
     }
@@ -127,7 +127,7 @@ class AverageLinkClusteringTest {
     void validationSimilaritesNeRemontentJamaisEtDeuxDernieresNulles() throws IOException {
         List<Merge> ms = run(couplingValidation()).merges();
         for (int k = 1; k < ms.size(); k++) {
-            assertTrue(ms.get(k).similarity() <= ms.get(k - 1).similarity() + AverageLinkClustering.EPS,
+            assertTrue(ms.get(k).similarity() <= ms.get(k - 1).similarity() + HierarchicalClustering.EPS,
                     "remontée à l'étape " + (k + 1));
         }
         assertEquals(0.0, ms.get(12).similarity(), EPS);
@@ -169,9 +169,9 @@ class AverageLinkClusteringTest {
             active.remove(mg.a().id());
             active.remove(mg.b().id());
             for (Cluster h : active.values()) {
-                double direct = AverageLinkClustering.averageLink(mg.result(), h, sim);
-                double incr = (mg.a().size() * AverageLinkClustering.averageLink(mg.a(), h, sim)
-                        + mg.b().size() * AverageLinkClustering.averageLink(mg.b(), h, sim))
+                double direct = HierarchicalClustering.averageLink(mg.result(), h, sim);
+                double incr = (mg.a().size() * HierarchicalClustering.averageLink(mg.a(), h, sim)
+                        + mg.b().size() * HierarchicalClustering.averageLink(mg.b(), h, sim))
                         / (mg.a().size() + mg.b().size());
                 assertEquals(incr, direct, 1e-12, "étape " + mg.step() + ", groupe " + h);
             }

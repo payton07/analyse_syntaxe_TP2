@@ -10,10 +10,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import hai913i.tp2.clustering.AverageLinkClustering;
+import hai913i.tp2.clustering.HierarchicalClustering;
 import hai913i.tp2.clustering.Dendrogram;
+import hai913i.tp2.clustering.Linkage;
 import hai913i.tp2.clustering.Merge;
 import hai913i.tp2.clustering.Similarity;
+import hai913i.tp2.clustering.TreeComparison;
 import hai913i.tp2.coupling.ClassPair;
 import hai913i.tp2.cut.CutResult;
 import hai913i.tp2.cut.TreeCut;
@@ -98,6 +100,7 @@ public final class Main {
         List<Double> cps = List.of(CP_DEFAUT);
         String prefix = null;
         Path out = Path.of(OUT_DEFAUT);
+        Linkage linkage = Linkage.MOYEN;
         for (int i = 1; i < args.length; i++) {
             if ("--cp".equals(args[i]) && i + 1 < args.length) {
                 cps = parseCps(args[++i]);
@@ -108,6 +111,12 @@ public final class Main {
                 prefix = args[++i];
             } else if ("--out".equals(args[i]) && i + 1 < args.length) {
                 out = Path.of(args[++i]);
+            } else if ("--lien".equals(args[i]) && i + 1 < args.length) {
+                linkage = Linkage.parse(args[++i]);
+                if (linkage == null) {
+                    usage("valeur de --lien invalide : « " + args[i] + " » (moyen ou simple)");
+                    return;
+                }
             } else {
                 usage("argument inconnu : " + args[i]);
                 return;
@@ -172,13 +181,19 @@ public final class Main {
         }
 
         // B1 — on regroupe les classes ; le regroupement ne reçoit que la matrice
-        Dendrogram dendrogram = AverageLinkClustering.run(coupling.classes(),
-                Similarity.fromMatrix(coupling.matrix()));
-        printMerges(dendrogram);
+        Similarity sim = Similarity.fromMatrix(coupling.matrix());
+        Dendrogram dendrogram = HierarchicalClustering.run(coupling.classes(), sim, linkage);
+        printMerges(dendrogram, linkage);
+        if (linkage != Linkage.MOYEN) {
+            // bonus C1 : on reconstruit l'arbre de référence pour comparer
+            printComparison(HierarchicalClustering.run(coupling.classes(), sim, Linkage.MOYEN),
+                    dendrogram, linkage);
+        }
+        String suffix = linkage == Linkage.MOYEN ? "" : "-" + linkage.label();
 
         // B2 — on écrit le dendrogramme sous ses trois formes
         try {
-            List<Path> files = DendrogramExport.writeAll(dendrogram, out);
+            List<Path> files = DendrogramExport.writeAll(dendrogram, out, suffix);
             OUT.println();
             OUT.println("== B2 · Dendrogramme ==");
             OUT.printf(Locale.ROOT, "Feuilles / nœuds internes : %d / %d%n",
@@ -193,13 +208,12 @@ public final class Main {
         }
 
         // B3 — on coupe l'arbre pour chaque seuil demandé
-        Similarity sim = Similarity.fromMatrix(coupling.matrix());
         List<CutResult> cuts = new ArrayList<>();
         try {
             for (double cp : cps) {
                 CutResult r = TreeCut.cut(dendrogram, sim, cp);
                 cuts.add(r);
-                List<Path> files = ModulesExport.write(r, dendrogram, graph, out);
+                List<Path> files = ModulesExport.write(r, dendrogram, graph, out, suffix);
                 printCut(r, dendrogram, files);
             }
         } catch (IOException e) {
@@ -286,9 +300,9 @@ public final class Main {
      *
      * @param d le dendrogramme
      */
-    private static void printMerges(Dendrogram d) {
+    private static void printMerges(Dendrogram d, Linkage linkage) {
         OUT.println();
-        OUT.println("== B1 · Regroupement ascendant (lien moyen) ==");
+        OUT.println("== B1 · Regroupement ascendant (lien " + linkage.label() + ") ==");
         OUT.printf(Locale.ROOT, "Fusions               : %d%n", d.merges().size());
         OUT.printf(Locale.ROOT, "  %5s  %-8s  %s%n", "étape", "S", "groupe A  +  groupe B  →  nouveau");
         boolean monotone = true;
@@ -299,13 +313,51 @@ public final class Main {
                     m.a().id(), Names.braces(d.labelsOf(m.a())),
                     m.b().id(), Names.braces(d.labelsOf(m.b())),
                     m.result().id());
-            if (m.similarity() > previous + AverageLinkClustering.EPS) {
+            if (m.similarity() > previous + HierarchicalClustering.EPS) {
                 monotone = false;
             }
             previous = m.similarity();
         }
         OUT.println("Similarités           : "
                 + (monotone ? "ne remontent jamais (contrôle OK)" : "ANOMALIE : une similarité remonte"));
+    }
+
+    /**
+     * Bonus C1 : affiche côte à côte les fusions des deux arbres et la première
+     * étape où ils divergent.
+     *
+     * @param reference l'arbre au lien moyen
+     * @param other     l'arbre construit avec l'autre critère
+     * @param linkage   cet autre critère
+     */
+    private static void printComparison(Dendrogram reference, Dendrogram other, Linkage linkage) {
+        OUT.println();
+        OUT.println("== C1 · Comparaison : lien moyen et lien " + linkage.label() + " ==");
+        OUT.printf(Locale.ROOT, "  %5s  %-8s %-46s  %-8s %s%n", "étape", "S moyen", "fusion (lien moyen)",
+                "S " + linkage.label(), "fusion (lien " + linkage.label() + ")");
+        int first = TreeComparison.firstDivergence(reference, other);
+        for (int k = 0; k < reference.merges().size(); k++) {
+            Merge a = reference.merges().get(k);
+            Merge b = other.merges().get(k);
+            OUT.printf(Locale.ROOT, "  %5d  %.4f   %-46s  %.4f   %s%s%n", a.step(),
+                    a.similarity(), shortMerge(reference, a), b.similarity(), shortMerge(other, b),
+                    first != 0 && a.step() >= first && !TreeComparison.sameMerge(a, b) ? "   ≠" : "");
+        }
+        OUT.println("Première divergence   : "
+                + (first == 0 ? "aucune, les deux arbres sont identiques" : "étape " + first));
+    }
+
+    /** Une fusion en une ligne courte : « {Item, LoanService} + {Loan} ». */
+    private static String shortMerge(Dendrogram d, Merge m) {
+        String a = Names.braces(d.labelsOf(m.a()));
+        String b = Names.braces(d.labelsOf(m.b()));
+        String s = a + " + " + b;
+        if (s.length() <= 46) {
+            return s;
+        }
+        // trop long : on montre le plus petit groupe et la taille de l'autre
+        boolean aSmaller = m.a().size() <= m.b().size();
+        return (aSmaller ? a : b) + " + groupe de " + (aSmaller ? m.b() : m.a()).size() + " classes";
     }
 
     /**
@@ -374,7 +426,8 @@ public final class Main {
         ERR.println("Erreur : " + message);
         ERR.println();
         ERR.println("Usage : java -jar hai913i-tp2.jar <dossier-des-faits>"
-                + " [--cp <v1,v2,…>] [--prefix <préfixe>] [--out <dossier>]");
+                + " [--cp <v1,v2,…>] [--prefix <préfixe>] [--out <dossier>]"
+                + " [--lien moyen|simple]");
         ERR.println();
         ERR.println("  <dossier-des-faits>  dossier contenant les trois fichiers");
         ERR.println("                       <préfixe>-classes.csv,");
@@ -386,6 +439,8 @@ public final class Main {
         ERR.println("                       déduit du dossier");
         ERR.println("  --out <dossier>      dossier des exports (défaut : "
                 + OUT_DEFAUT + ")");
+        ERR.println("  --lien moyen|simple  critère de liaison (défaut : moyen) ; avec");
+        ERR.println("                       simple, compare aussi les deux arbres (bonus C1)");
         System.exit(1);
     }
 }

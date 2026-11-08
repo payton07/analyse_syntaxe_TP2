@@ -16,7 +16,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.Test;
 
-import hai913i.tp2.clustering.AverageLinkClustering;
+import hai913i.tp2.clustering.HierarchicalClustering;
 import hai913i.tp2.clustering.Cluster;
 import hai913i.tp2.clustering.Dendrogram;
 import hai913i.tp2.clustering.Similarity;
@@ -38,13 +38,13 @@ class TreeCutTest {
     private static Setup setup(Path dir) throws IOException {
         Coupling c = Coupling.from(Facts.load(dir));
         Similarity sim = Similarity.fromMatrix(c.matrix());
-        return new Setup(AverageLinkClustering.run(c.classes(), sim), sim);
+        return new Setup(HierarchicalClustering.run(c.classes(), sim), sim);
     }
 
     private static Setup mini() throws IOException {
         Coupling c = Coupling.from(Facts.load(Path.of("src", "test", "resources"), "facts-mini"));
         Similarity sim = Similarity.fromMatrix(c.matrix());
-        return new Setup(AverageLinkClustering.run(c.classes(), sim), sim);
+        return new Setup(HierarchicalClustering.run(c.classes(), sim), sim);
     }
 
     private static Setup validation() throws IOException {
