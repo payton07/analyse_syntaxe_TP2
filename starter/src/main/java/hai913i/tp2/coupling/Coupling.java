@@ -12,6 +12,7 @@ import java.util.TreeMap;
 
 import hai913i.tp2.input.FactSource;
 import hai913i.tp2.input.FactSource.CallArc;
+import hai913i.tp2.input.Inheritance;
 
 /**
  * Le couplage entre classes (étape A1).
@@ -40,13 +41,18 @@ public final class Coupling {
     private final SortedMap<ClassPair, Integer> arcsByPair;
     private final int interArcs;
     private final int internalArcs;
+    private final int inheritanceLinks;
+    private final int ignoredInheritanceLinks;
 
     private Coupling(List<String> classes, SortedMap<ClassPair, Integer> arcsByPair,
-                     int interArcs, int internalArcs) {
+                     int interArcs, int internalArcs, int inheritanceLinks,
+                     int ignoredInheritanceLinks) {
         this.classes = List.copyOf(classes);
         this.arcsByPair = Collections.unmodifiableSortedMap(arcsByPair);
         this.interArcs = interArcs;
         this.internalArcs = internalArcs;
+        this.inheritanceLinks = inheritanceLinks;
+        this.ignoredInheritanceLinks = ignoredInheritanceLinks;
     }
 
     /**
@@ -58,6 +64,26 @@ public final class Coupling {
      *                                  liste des classes (faits incohérents)
      */
     public static Coupling from(FactSource facts) {
+        return from(facts, List.of());
+    }
+
+    /**
+     * Calcule le couplage en ajoutant l'héritage aux appels (bonus C2).
+     *
+     * <p>Convention retenue : un lien d'héritage ou d'implémentation entre deux
+     * classes du projet compte comme <b>un arc de plus</b>, au numérateur r(A, B)
+     * comme au dénominateur |E_inter|. La somme des couplages vaut donc toujours
+     * 1, et un lien d'héritage pèse autant qu'un appel. On écarte les liens vers
+     * des types hors du projet ({@code java.lang.Enum}…) : ils ne relient
+     * aucune paire de classes du projet.</p>
+     *
+     * @param facts les faits, derrière l'interface d'entrée
+     * @param links les liens d'héritage ; liste vide pour la relation imposée
+     * @return le couplage entre toutes les classes
+     * @throws IllegalArgumentException si un arc cite une classe absente de la
+     *                                  liste des classes (faits incohérents)
+     */
+    public static Coupling from(FactSource facts, List<Inheritance.Link> links) {
         List<String> classes = facts.classNames();
         Set<String> known = new HashSet<>(classes);
         SortedMap<ClassPair, Integer> arcs = new TreeMap<>();
@@ -78,7 +104,19 @@ public final class Coupling {
             // on ajoute 1 par arc (une ligne du fichier), quel que soit son nombre de sites
             arcs.merge(ClassPair.of(a, b), 1, Integer::sum);
         }
-        return new Coupling(classes, arcs, inter, internal);
+        int kept = 0;
+        int ignored = 0;
+        for (Inheritance.Link l : links) {
+            if (!known.contains(l.type()) || !known.contains(l.parent())
+                    || l.type().equals(l.parent())) {
+                ignored++;                   // type externe au projet : on ne le compte pas
+                continue;
+            }
+            kept++;
+            inter++;
+            arcs.merge(ClassPair.of(l.type(), l.parent()), 1, Integer::sum);
+        }
+        return new Coupling(classes, arcs, inter, internal, kept, ignored);
     }
 
     /** @return les classes, triées ; leur nombre est M */
@@ -89,6 +127,16 @@ public final class Coupling {
     /** @return |E_inter|, le dénominateur du couplage */
     public int interArcs() {
         return interArcs;
+    }
+
+    /** @return les liens d'héritage comptés (bonus C2), 0 pour la relation imposée */
+    public int inheritanceLinks() {
+        return inheritanceLinks;
+    }
+
+    /** @return les liens d'héritage écartés parce qu'ils sortent du projet */
+    public int ignoredInheritanceLinks() {
+        return ignoredInheritanceLinks;
     }
 
     /** @return le nombre d'arcs internes à une classe, écartés du calcul */

@@ -24,6 +24,7 @@ import hai913i.tp2.graph.CouplingGraph;
 import hai913i.tp2.graph.GraphIO;
 import hai913i.tp2.input.FactSource;
 import hai913i.tp2.input.Facts;
+import hai913i.tp2.input.Inheritance;
 import hai913i.tp2.output.DendrogramExport;
 import hai913i.tp2.output.ModulesExport;
 import hai913i.tp2.output.Names;
@@ -101,6 +102,7 @@ public final class Main {
         String prefix = null;
         Path out = Path.of(OUT_DEFAUT);
         Linkage linkage = Linkage.MOYEN;
+        boolean heritage = false;
         for (int i = 1; i < args.length; i++) {
             if ("--cp".equals(args[i]) && i + 1 < args.length) {
                 cps = parseCps(args[++i]);
@@ -111,6 +113,8 @@ public final class Main {
                 prefix = args[++i];
             } else if ("--out".equals(args[i]) && i + 1 < args.length) {
                 out = Path.of(args[++i]);
+            } else if ("--heritage".equals(args[i])) {
+                heritage = true;
             } else if ("--lien".equals(args[i]) && i + 1 < args.length) {
                 linkage = Linkage.parse(args[++i]);
                 if (linkage == null) {
@@ -135,6 +139,17 @@ public final class Main {
             System.exit(2);
             return;
         }
+        // bonus C2 : on lit l'héritage seulement si on le demande, le JSON est facultatif
+        List<Inheritance.Link> links = List.of();
+        try {
+            if (heritage) {
+                links = Inheritance.load(Inheritance.jsonFile(dir, prefix));
+            }
+        } catch (IOException e) {
+            ERR.println("Lecture de l'héritage impossible : " + e.getMessage());
+            System.exit(2);
+            return;
+        }
 
         OUT.println("Dossier des faits   : " + dir.toAbsolutePath());
         OUT.println("Jeu de données      : " + prefix);
@@ -150,7 +165,7 @@ public final class Main {
         // A1 — on calcule le couplage entre classes
         Coupling coupling;
         try {
-            coupling = Coupling.from(facts);
+            coupling = Coupling.from(facts, links);
         } catch (IllegalArgumentException e) {
             ERR.println("Faits incohérents : " + e.getMessage());
             System.exit(2);
@@ -162,8 +177,9 @@ public final class Main {
         CouplingGraph graph = CouplingGraph.from(coupling);
         try {
             Files.createDirectories(out);
-            Path csv = out.resolve("graphe-couplage.csv");
-            Path dot = out.resolve("graphe-couplage.dot");
+            String graphSuffix = heritage ? "-heritage" : "";
+            Path csv = out.resolve("graphe-couplage" + graphSuffix + ".csv");
+            Path dot = out.resolve("graphe-couplage" + graphSuffix + ".dot");
             GraphIO.writeCsv(graph, csv);
             GraphIO.writeDot(graph, dot);
             CouplingGraph reloaded = GraphIO.readCsv(csv);
@@ -189,7 +205,8 @@ public final class Main {
             printComparison(HierarchicalClustering.run(coupling.classes(), sim, Linkage.MOYEN),
                     dendrogram, linkage);
         }
-        String suffix = linkage == Linkage.MOYEN ? "" : "-" + linkage.label();
+        String suffix = (linkage == Linkage.MOYEN ? "" : "-" + linkage.label())
+                + (heritage ? "-heritage" : "");
 
         // B2 — on écrit le dendrogramme sous ses trois formes
         try {
@@ -223,6 +240,17 @@ public final class Main {
         }
         if (cuts.size() > 1) {
             printCutSummary(cuts);
+        }
+        if (heritage) {
+            // bonus C2 : on refait la chaîne sans l'héritage, avec le même lien, pour comparer
+            Coupling plain = Coupling.from(facts);
+            Similarity plainSim = Similarity.fromMatrix(plain.matrix());
+            Dendrogram plainTree = HierarchicalClustering.run(plain.classes(), plainSim, linkage);
+            List<CutResult> plainCuts = new ArrayList<>();
+            for (double cp : cps) {
+                plainCuts.add(TreeCut.cut(plainTree, plainSim, cp));
+            }
+            printHeritageComparison(plainCuts, plainTree, cuts, dendrogram);
         }
     }
 
@@ -323,6 +351,39 @@ public final class Main {
     }
 
     /**
+     * Bonus C2 : pour chaque seuil, les modules sans puis avec l'héritage.
+     *
+     * @param plainCuts coupes sur la relation imposée (appels seuls)
+     * @param plainTree arbre correspondant
+     * @param cuts      coupes avec l'héritage
+     * @param tree      arbre correspondant
+     */
+    private static void printHeritageComparison(List<CutResult> plainCuts, Dendrogram plainTree,
+                                                List<CutResult> cuts, Dendrogram tree) {
+        OUT.println();
+        OUT.println("== C2 · Modules sans et avec l'héritage ==");
+        for (int k = 0; k < cuts.size(); k++) {
+            CutResult a = plainCuts.get(k);
+            CutResult b = cuts.get(k);
+            OUT.println("CP = " + ModulesExport.cpLabel(a.cp()));
+            printModuleLine("  appels seuls      ", a, plainTree);
+            printModuleLine("  appels + héritage ", b, tree);
+        }
+    }
+
+    private static void printModuleLine(String title, CutResult r, Dendrogram d) {
+        List<String> mods = new ArrayList<>();
+        for (CutResult.Module m : r.modules()) {
+            mods.add(Names.braces(d.labelsOf(m.cluster())));
+        }
+        OUT.printf(Locale.ROOT, "%s: %d modules, M/2 %s%n", title, r.modules().size(),
+                r.respectsMaxModules() ? "respectée" : "VIOLÉE");
+        for (String m : mods) {
+            OUT.println("      " + m);
+        }
+    }
+
+    /**
      * Bonus C1 : affiche côte à côte les fusions des deux arbres et la première
      * étape où ils divergent.
      *
@@ -397,7 +458,14 @@ public final class Main {
         OUT.println();
         OUT.println("== A1 · Couplage entre classes ==");
         OUT.printf(Locale.ROOT, "Arcs internes écartés : %d%n", c.internalArcs());
-        OUT.printf(Locale.ROOT, "|E_inter|             : %d%n", c.interArcs());
+        if (c.inheritanceLinks() > 0 || c.ignoredInheritanceLinks() > 0) {
+            OUT.printf(Locale.ROOT, "Liens d'héritage      : %d comptés, %d écartés (types hors du projet)%n",
+                    c.inheritanceLinks(), c.ignoredInheritanceLinks());
+            OUT.printf(Locale.ROOT, "|E_inter|             : %d (%d appels + %d liens d'héritage)%n",
+                    c.interArcs(), c.interArcs() - c.inheritanceLinks(), c.inheritanceLinks());
+        } else {
+            OUT.printf(Locale.ROOT, "|E_inter|             : %d%n", c.interArcs());
+        }
         OUT.printf(Locale.ROOT, "Couples non nuls      : %d / %d%n",
                 c.nonZeroPairs().size(), c.possiblePairs());
         OUT.println();
@@ -427,7 +495,7 @@ public final class Main {
         ERR.println();
         ERR.println("Usage : java -jar hai913i-tp2.jar <dossier-des-faits>"
                 + " [--cp <v1,v2,…>] [--prefix <préfixe>] [--out <dossier>]"
-                + " [--lien moyen|simple]");
+                + " [--lien moyen|simple] [--heritage]");
         ERR.println();
         ERR.println("  <dossier-des-faits>  dossier contenant les trois fichiers");
         ERR.println("                       <préfixe>-classes.csv,");
@@ -441,6 +509,8 @@ public final class Main {
                 + OUT_DEFAUT + ")");
         ERR.println("  --lien moyen|simple  critère de liaison (défaut : moyen) ; avec");
         ERR.println("                       simple, compare aussi les deux arbres (bonus C1)");
+        ERR.println("  --heritage           ajoute l'héritage lu dans <préfixe>.json et");
+        ERR.println("                       compare les modules obtenus (bonus C2)");
         System.exit(1);
     }
 }
