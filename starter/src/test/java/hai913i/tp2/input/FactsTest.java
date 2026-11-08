@@ -14,23 +14,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * Test de fumée du squelette.
+ * Tests de l'étage d'entrée (point de contrôle A0).
  *
- * <p><b>Ce qu'il vérifie.</b> Uniquement l'étage d'entrée (le point de
- * contrôle A0). Il porte sur le micro jeu de données {@code facts-mini} (trois
- * classes, cinq méthodes, quatre arcs), dont toutes les valeurs attendues sont
- * calculées à la main dans {@code examples/README.txt} et donc vérifiables sans
- * exécuter quoi que ce soit.</p>
+ * <p>On part du micro jeu de données {@code facts-mini} (trois classes, cinq
+ * méthodes, quatre arcs), dont toutes les valeurs attendues se calculent à la
+ * main : une erreur invisible sur quinze classes saute aux yeux sur trois. Le
+ * couplage, le regroupement et la coupe ont leurs propres classes de test.</p>
  *
- * <p><b>Pourquoi ce jeu-là.</b> Une erreur de couplage ou de moyenne est
- * invisible sur quinze classes et saute aux yeux sur trois. Gardez ce test et
- * <b>complétez-le</b> au fur et à mesure : la somme des couplages vaut 1, les
- * deux fusions valent 0,6667 puis 0,1667, la coupe à CP = 0,20 donne un module
- * et celle à CP = 0,50 en donne deux, donc viole M/2. C'est le moyen le plus
- * rapide de savoir si votre chaîne est juste.</p>
- *
- * <p><b>Ce qu'il ne vérifie pas.</b> Le couplage, le regroupement et la coupe :
- * ils ne sont pas fournis, c'est à vous de les écrire et de les tester.</p>
+ * <p>On vérifie aussi que la lecture refuse clairement un fichier qui ne suit
+ * pas le format canonique (en-tête inattendu, guillemets) plutôt que de
+ * produire des faits faux.</p>
  */
 class FactsTest {
 

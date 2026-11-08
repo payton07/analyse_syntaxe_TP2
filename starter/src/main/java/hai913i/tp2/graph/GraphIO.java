@@ -104,7 +104,7 @@ public final class GraphIO {
                 default -> throw new IOException(where + " : type de ligne inconnu « " + f[0] + " »");
             }
         }
-        // les arêtes, triées par couple comme dans CouplingGraph.from
+        // on trie les arêtes par couple, comme CouplingGraph.from, pour que equals compare bien
         Map<ClassPair, CouplingGraph.Edge> edges = new TreeMap<>();
         for (String[] row : edgeRows) {
             String a = row[0];

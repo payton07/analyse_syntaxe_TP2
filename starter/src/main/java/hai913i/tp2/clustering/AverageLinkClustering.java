@@ -48,7 +48,7 @@ public final class AverageLinkClustering {
         if (m == 0) {
             throw new IllegalArgumentException("aucune classe à regrouper");
         }
-        // groupes actifs, triés par identifiant : c'est ce tri qui rend le parcours déterministe
+        // on range les groupes actifs par identifiant : c'est ce tri qui rend le parcours déterministe
         TreeMap<Integer, Cluster> active = new TreeMap<>();
         for (int i = 0; i < m; i++) {
             active.put(i, Cluster.leaf(i));
@@ -63,7 +63,7 @@ public final class AverageLinkClustering {
             for (int i = 0; i < groups.size(); i++) {
                 for (int j = i + 1; j < groups.size(); j++) {
                     double s = averageLink(groups.get(i), groups.get(j), sim);
-                    if (bestA == null || s > best + EPS) {   // strictement meilleur seulement
+                    if (bestA == null || s > best + EPS) {   // on ne remplace que si c'est strictement meilleur
                         best = s;
                         bestA = groups.get(i);
                         bestB = groups.get(j);
@@ -95,6 +95,6 @@ public final class AverageLinkClustering {
                 sum += sim.of(a, b);
             }
         }
-        return sum / ((double) g1.size() * g2.size());   // TOUS les couples, nuls compris
+        return sum / ((double) g1.size() * g2.size());   // on divise par TOUS les couples, nuls compris
     }
 }

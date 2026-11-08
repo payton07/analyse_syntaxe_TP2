@@ -32,9 +32,6 @@ import hai913i.tp2.input.FactSource.CallArc;
  * <p><b>Ce qu'on compte.</b> Un arc est une ligne du fichier des appels, comptée
  * une fois quel que soit son nombre de sites d'appel.</p>
  *
- * <p><b>Stockage.</b> Table creuse et triée des seuls couples non nuls ; un couple
- * absent vaut 0. Le graphe de validation n'a que 19 couples non nuls sur 105.</p>
- *
  * <p>Objet immuable : une fois construit, rien ne le modifie.</p>
  */
 public final class Coupling {
@@ -74,10 +71,11 @@ public final class Coupling {
                         + arc.caller() + " -> " + arc.callee());
             }
             if (a.equals(b)) {
-                internal++;                  // arc interne : relève de la cohésion
+                internal++;                  // arc interne : on l'écarte, il relève de la cohésion
                 continue;
             }
-            inter++;                         // un arc = +1, quels que soient ses sites
+            inter++;
+            // on ajoute 1 par arc (une ligne du fichier), quel que soit son nombre de sites
             arcs.merge(ClassPair.of(a, b), 1, Integer::sum);
         }
         return new Coupling(classes, arcs, inter, internal);

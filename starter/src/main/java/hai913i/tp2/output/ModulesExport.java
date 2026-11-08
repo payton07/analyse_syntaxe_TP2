@@ -95,7 +95,7 @@ public final class ModulesExport {
      * @return le graphe de couplage, un cadre par module, une couleur par paquetage
      */
     public static String dot(CutResult r, Dendrogram d, CouplingGraph g) {
-        // une couleur par paquetage, dans l'ordre alphabétique des paquetages
+        // on donne une couleur par paquetage, dans l'ordre alphabétique
         TreeSet<String> packages = new TreeSet<>();
         for (String q : d.labels()) {
             packages.add(Names.packageOf(q));
@@ -117,7 +117,7 @@ public final class ModulesExport {
         sb.append("  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\"];\n");
         sb.append("  edge [fontname=\"Helvetica\", fontsize=10];\n");
 
-        // légende des paquetages
+        // on ajoute la légende des paquetages
         sb.append("  subgraph cluster_legende {\n    label=\"paquetages\"; style=dotted;\n");
         int i = 0;
         for (String p : packages) {

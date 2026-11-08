@@ -62,7 +62,7 @@ public final class Cluster {
         List<Integer> m = new ArrayList<>(left.members.size() + right.members.size());
         int i = 0;
         int j = 0;
-        while (i < left.members.size() || j < right.members.size()) {   // fusion de deux listes triées
+        while (i < left.members.size() || j < right.members.size()) {   // on fusionne deux listes triées
             if (j == right.members.size()
                     || (i < left.members.size() && left.members.get(i) < right.members.get(j))) {
                 m.add(left.members.get(i++));

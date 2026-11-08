@@ -27,11 +27,11 @@ import java.util.Map;
  * graphe pondéré (A2), le regroupement (B1), le dendrogramme (B2) et la coupe
  * (B3) sont l'objet du TP : rien de tout cela n'est fourni ici.</p>
  *
- * <p><b>Vous n'êtes pas obligés de l'utiliser.</b> Si vous branchez votre propre
- * modèle de faits du TP 1, écrivez un adaptateur qui produit les mêmes trois
- * vues — {@link #classNames()}, {@link #methodOwners()}, {@link #calls()} — et
- * le reste de votre programme n'aura pas à savoir d'où viennent les faits. Le
- * barème ne distingue pas les deux chemins.</p>
+ * <p><b>Pourquoi derrière une interface.</b> On l'utilise à travers
+ * {@link FactSource} : pour brancher le modèle de faits du TP 1 (chemin 1), il
+ * suffirait d'écrire un adaptateur qui produit les mêmes trois vues —
+ * {@link #classNames()}, {@link #methodOwners()}, {@link #calls()} — sans rien
+ * changer au reste du programme.</p>
  *
  * <p><b>Format attendu</b> : trois fichiers CSV de même préfixe, séparateur
  * point-virgule, une ligne d'en-tête, encodage UTF-8. Aucun champ ne contient
@@ -56,7 +56,7 @@ public final class Facts implements FactSource {
     public record ClassInfo(String name, String simpleName, String packageName) {
     }
 
-    // Le record CallArc est déclaré dans FactSource et hérité ici :
+    // On a déplacé le record CallArc dans FactSource ; Facts en hérite, donc
     // Facts.CallArc et FactSource.CallArc désignent le même type.
 
     /** En-têtes exacts des trois fichiers du format canonique. */
@@ -82,7 +82,7 @@ public final class Facts implements FactSource {
      * Charge un jeu de données depuis un dossier, sans connaître son préfixe.
      *
      * <p>Le préfixe est déduit du fichier {@code *-classes.csv} présent dans le
-     * dossier. Votre outil fonctionne ainsi sur n'importe quel jeu de faits au
+     * dossier. L'outil fonctionne ainsi sur n'importe quel jeu de faits au
      * format canonique, et pas seulement sur celui du projet de validation.</p>
      *
      * @param dir dossier contenant les trois fichiers CSV
@@ -285,8 +285,8 @@ public final class Facts implements FactSource {
     /**
      * Tous les arcs du graphe d'appel, <b>arcs intra-classe compris</b>.
      *
-     * <p>C'est à vous d'écarter les arcs dont les deux extrémités sont dans la
-     * même classe (étape A1) : ils relèvent de la cohésion, pas du couplage, et
+     * <p>C'est l'étape A1 qui écarte les arcs dont les deux extrémités sont dans
+     * la même classe : ils relèvent de la cohésion, pas du couplage, et
      * ils ne comptent ni au numérateur ni au dénominateur.</p>
      *
      * @return liste immuable ; sa taille est le compteur d'arcs de l'étape A0
