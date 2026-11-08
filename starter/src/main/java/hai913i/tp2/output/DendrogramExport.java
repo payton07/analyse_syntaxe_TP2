@@ -119,7 +119,7 @@ public final class DendrogramExport {
         sb.append("  node [fontname=\"Helvetica\", fontsize=10];\n");
         sb.append("  edge [dir=none];\n\n");
 
-        // axe vertical : une graduation par fusion, avec la similarité réelle en regard
+        // on trace un axe vertical : une graduation par fusion, avec sa similarité en regard
         sb.append("  // axe : ordre des fusions et similarité\n");
         sb.append("  node [shape=plaintext, fontcolor=\"#555555\"];\n");
         sb.append("  axe0 [label=\"classes\"];\n");
@@ -135,7 +135,7 @@ public final class DendrogramExport {
             sb.append(" [style=invis];\n");
         }
 
-        // feuilles, dans l'ordre de l'arbre pour éviter les croisements
+        // on place les feuilles dans l'ordre de l'arbre pour éviter les croisements
         sb.append("\n  // feuilles\n");
         sb.append("  node [shape=box, style=\"rounded,filled\", fillcolor=\"#eef3fb\", fontcolor=black];\n");
         List<Cluster> leaves = new ArrayList<>();
@@ -148,7 +148,7 @@ public final class DendrogramExport {
         }
         sb.append(sameRank).append(" }\n");
 
-        // nœuds internes, chacun au rang de sa fusion
+        // on met chaque nœud interne au rang de sa fusion
         sb.append("\n  // fusions\n");
         sb.append("  node [shape=ellipse, style=filled, fillcolor=\"#fde8e8\", fontsize=9];\n");
         for (Merge m : d.merges()) {

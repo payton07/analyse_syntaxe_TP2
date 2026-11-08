@@ -90,6 +90,6 @@ public final class TreeCut {
                 sum += sim.of(m.get(i), m.get(j));
             }
         }
-        return sum / (n * (n - 1) / 2.0);     // TOUS les couples, nuls compris
+        return sum / (n * (n - 1) / 2.0);     // on divise par TOUS les couples, nuls compris
     }
 }

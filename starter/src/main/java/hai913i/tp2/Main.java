@@ -29,9 +29,9 @@ import hai913i.tp2.output.Names;
 /**
  * Point d'entrée : enchaîne toute la chaîne du TP 2, des faits aux modules.
  *
- * <p><b>Rôle.</b> Lire la ligne de commande, appeler chaque responsabilité dans
- * l'ordre, afficher les points de contrôle et écrire les exports. Aucun calcul
- * n'est fait ici : chaque étape vit dans son paquetage.</p>
+ * <p><b>Rôle.</b> On lit la ligne de commande, on appelle chaque étape dans
+ * l'ordre, on affiche les points de contrôle et on écrit les exports. On ne
+ * fait aucun calcul ici : chaque étape vit dans son paquetage.</p>
  * <ol>
  *   <li>A0 — {@code input} : les faits, derrière l'interface {@link FactSource} ;</li>
  *   <li>A1 — {@code coupling} : C(A, B) = r(A, B) / |E_inter| ;</li>
@@ -50,8 +50,8 @@ import hai913i.tp2.output.Names;
  *
  * <p>Le dossier passé en argument est celui qui contient les trois fichiers
  * {@code ...-classes.csv}, {@code ...-methods.csv} et {@code ...-calls.csv}.
- * Le préfixe en est déduit : votre outil n'a donc aucune raison de connaître le
- * nom du projet de validation, et il fonctionnera tel quel sur un autre jeu de
+ * On en déduit le préfixe : l'outil n'a donc pas besoin de connaître le nom
+ * du projet de validation, et il fonctionne tel quel sur un autre jeu de
  * faits.</p>
  *
  * <p><b>Codes de sortie</b> : 0 si la chaîne s'est exécutée (y compris quand
@@ -114,7 +114,7 @@ public final class Main {
             }
         }
 
-        // A0 — le reste du programme ne voit que l'interface FactSource
+        // A0 — on charge les faits ; la suite ne voit que l'interface FactSource
         FactSource facts;
         try {
             if (prefix == null) {
@@ -138,7 +138,7 @@ public final class Main {
         OUT.println("Seuil(s) CP         : " + String.join(", ",
                 cps.stream().map(ModulesExport::cpLabel).toList()));
 
-        // A1 — couplage entre classes
+        // A1 — on calcule le couplage entre classes
         Coupling coupling;
         try {
             coupling = Coupling.from(facts);
@@ -149,7 +149,7 @@ public final class Main {
         }
         printCoupling(coupling);
 
-        // A2 — graphe de couplage pondéré, exporté puis relu
+        // A2 — on construit le graphe pondéré, on l'exporte, puis on relit le CSV pour vérifier
         CouplingGraph graph = CouplingGraph.from(coupling);
         try {
             Files.createDirectories(out);
@@ -171,12 +171,12 @@ public final class Main {
             return;
         }
 
-        // B1 — regroupement ascendant, lien moyen ; il ne reçoit que la matrice
+        // B1 — on regroupe les classes ; le regroupement ne reçoit que la matrice
         Dendrogram dendrogram = AverageLinkClustering.run(coupling.classes(),
                 Similarity.fromMatrix(coupling.matrix()));
         printMerges(dendrogram);
 
-        // B2 — restitution du dendrogramme
+        // B2 — on écrit le dendrogramme sous ses trois formes
         try {
             List<Path> files = DendrogramExport.writeAll(dendrogram, out);
             OUT.println();
@@ -192,7 +192,7 @@ public final class Main {
             return;
         }
 
-        // B3 — coupe de l'arbre, pour chaque seuil demandé
+        // B3 — on coupe l'arbre pour chaque seuil demandé
         Similarity sim = Similarity.fromMatrix(coupling.matrix());
         List<CutResult> cuts = new ArrayList<>();
         try {
