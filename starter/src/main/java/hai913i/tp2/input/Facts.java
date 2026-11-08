@@ -59,6 +59,14 @@ public final class Facts implements FactSource {
     // Le record CallArc est déclaré dans FactSource et hérité ici :
     // Facts.CallArc et FactSource.CallArc désignent le même type.
 
+    /** En-têtes exacts des trois fichiers du format canonique. */
+    static final String HEADER_CLASSES = "class;simpleName;package";
+    static final String HEADER_METHODS = "method;owner";
+    static final String HEADER_CALLS = "caller;callerClass;callee;calleeClass;sites";
+
+    /** Marque d'ordre des octets qu'Excel place en tête d'un fichier UTF-8. */
+    private static final String BOM = "\uFEFF";
+
     private final List<ClassInfo> classes;
     private final Map<String, String> methodOwners;
     private final List<CallArc> calls;
@@ -150,15 +158,15 @@ public final class Facts implements FactSource {
     public static Facts load(Path classesCsv, Path methodsCsv, Path callsCsv)
             throws IOException {
         List<ClassInfo> cls = new ArrayList<>();
-        for (String[] f : readCsv(classesCsv, 3)) {
+        for (String[] f : readCsv(classesCsv, HEADER_CLASSES)) {
             cls.add(new ClassInfo(f[0], f[1], f[2]));
         }
         Map<String, String> owners = new LinkedHashMap<>();
-        for (String[] f : readCsv(methodsCsv, 2)) {
+        for (String[] f : readCsv(methodsCsv, HEADER_METHODS)) {
             owners.put(f[0], f[1]);
         }
         List<CallArc> arcs = new ArrayList<>();
-        for (String[] f : readCsv(callsCsv, 5)) {
+        for (String[] f : readCsv(callsCsv, HEADER_CALLS)) {
             int sites;
             try {
                 sites = Integer.parseInt(f[4].trim());
@@ -173,29 +181,59 @@ public final class Facts implements FactSource {
     /**
      * Lit un CSV à séparateur point-virgule et en renvoie les lignes de données.
      *
-     * <p>Aucun champ du format canonique ne contient de point-virgule, de
-     * guillemet ni de saut de ligne : un simple {@code split(";")} suffit, et
-     * une bibliothèque CSV serait une dépendance pour rien.</p>
+     * <p>On garde un simple {@code split(";")} : le format canonique garantit
+     * qu'aucun champ ne contient de point-virgule, de guillemet ni de saut de
+     * ligne (voir {@code resources/README.txt}), et une bibliothèque CSV serait
+     * une dépendance pour rien. En contrepartie, on vérifie que le fichier a
+     * bien ce format : un fichier différent doit provoquer une erreur claire,
+     * jamais un résultat faux.</p>
+     * <ul>
+     *   <li>l'en-tête doit être exactement celui attendu, ce qui détecte une
+     *       colonne renommée, déplacée ou un autre séparateur ;</li>
+     *   <li>on retire le BOM qu'ajoutent certains éditeurs (Excel) en tête des
+     *       fichiers UTF-8 ;</li>
+     *   <li>on refuse les guillemets : un champ entre guillemets voudrait dire
+     *       que le fichier ne suit plus le format canonique ;</li>
+     *   <li>chaque ligne doit avoir le nombre de colonnes de l'en-tête.</li>
+     * </ul>
      *
-     * @param path    fichier à lire, en UTF-8
-     * @param columns nombre de colonnes attendu sur chaque ligne
+     * @param path   fichier à lire, en UTF-8
+     * @param header en-tête attendu, par exemple {@code method;owner}
      * @return les lignes de données, en-tête exclu, jamais nulles
-     * @throws IOException fichier absent, ou ligne au mauvais nombre de colonnes
+     * @throws IOException fichier absent, en-tête inattendu, guillemet, ou ligne
+     *                     au mauvais nombre de colonnes
      */
-    private static List<String[]> readCsv(Path path, int columns) throws IOException {
+    private static List<String[]> readCsv(Path path, String header) throws IOException {
         if (!Files.isRegularFile(path)) {
             throw new IOException("fichier introuvable : " + path.toAbsolutePath());
         }
         List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+        String name = path.getFileName().toString();
+        if (lines.isEmpty()) {
+            throw new IOException(name + " : fichier vide, en-tête « " + header + " » attendu");
+        }
+        String first = lines.get(0).strip();
+        if (first.startsWith(BOM)) {
+            first = first.substring(1);
+        }
+        if (!first.equals(header)) {
+            throw new IOException(name + " : format non reconnu, en-tête « " + header
+                    + " » attendu, « " + first + " » trouvé");
+        }
+        int columns = header.split(";").length;
         List<String[]> out = new ArrayList<>();
         for (int i = 1; i < lines.size(); i++) {      // la ligne 0 est l'en-tête
-            String line = lines.get(i).strip();
+            String line = lines.get(i).strip();       // strip() retire aussi le \r des fins CRLF
             if (line.isEmpty()) {
                 continue;
             }
+            if (line.indexOf('"') >= 0) {
+                throw new IOException(name + " ligne " + (i + 1)
+                        + " : guillemet trouvé, format non canonique");
+            }
             String[] fields = line.split(";", -1);
             if (fields.length != columns) {
-                throw new IOException(path.getFileName() + " ligne " + (i + 1)
+                throw new IOException(name + " ligne " + (i + 1)
                         + " : " + columns + " colonnes attendues, "
                         + fields.length + " trouvées");
             }

@@ -5,10 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Test de fumée du squelette.
@@ -87,5 +90,40 @@ class FactsTest {
         assertEquals(1, intra);
         // il reste |E_inter| = 3, le dénominateur du couplage sur ce jeu
         assertEquals(3, f.calls().size() - intra);
+    }
+    // --------------------------------------------- lecture stricte du format CSV
+
+    /** Écrit un jeu de trois fichiers dans un dossier temporaire. */
+    private static Path jeu(Path dir, String classes, String methods, String calls) throws IOException {
+        Files.writeString(dir.resolve("t-classes.csv"), classes, StandardCharsets.UTF_8);
+        Files.writeString(dir.resolve("t-methods.csv"), methods, StandardCharsets.UTF_8);
+        Files.writeString(dir.resolve("t-calls.csv"), calls, StandardCharsets.UTF_8);
+        return dir;
+    }
+
+    private static final String CLASSES = "class;simpleName;package\r\ndemo.A;A;demo\r\n";
+    private static final String METHODS = "method;owner\r\ndemo.A#f();demo.A\r\n";
+    private static final String CALLS = "caller;callerClass;callee;calleeClass;sites\r\n";
+
+    @Test
+    void unEnTeteInattenduEstRefuse(@TempDir Path dir) throws IOException {
+        // colonnes inversées : sans contrôle, les noms de méthodes deviendraient des classes
+        jeu(dir, CLASSES, "owner;method\r\ndemo.A;demo.A#f()\r\n", CALLS);
+        IOException e = assertThrows(IOException.class, () -> Facts.load(dir, "t"));
+        assertTrue(e.getMessage().contains("format non reconnu"), e.getMessage());
+    }
+
+    @Test
+    void leBomUtf8EnTeteDeFichierEstIgnore(@TempDir Path dir) throws IOException {
+        jeu(dir, "\uFEFF" + CLASSES, METHODS, CALLS);
+        Facts f = Facts.load(dir, "t");
+        assertEquals(List.of("demo.A"), f.classNames());
+    }
+
+    @Test
+    void unChampEntreGuillemetsEstRefuse(@TempDir Path dir) throws IOException {
+        jeu(dir, "class;simpleName;package\r\n\"demo.A\";A;demo\r\n", METHODS, CALLS);
+        IOException e = assertThrows(IOException.class, () -> Facts.load(dir, "t"));
+        assertTrue(e.getMessage().contains("guillemet"), e.getMessage());
     }
 }
