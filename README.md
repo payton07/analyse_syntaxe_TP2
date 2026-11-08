@@ -2,6 +2,8 @@
 
 Outil en ligne de commande qui part des faits extraits d'un projet Java (classes, méthodes, graphe d'appel) et en tire des **modules candidats** : couplage entre classes, graphe pondéré, clustering hiérarchique ascendant au lien moyen, dendrogramme, coupe sous contraintes. Trois bonus : lien simple comparé au lien moyen (C1), héritage ajouté à la relation (C2), interface graphique (C3).
 
+**Vidéo de démonstration** : [`video/demonstration.mp4`](https://github.com/payton07/analyse_syntaxe_TP2/blob/main/video/demonstration.mp4) (dans ce dépôt).
+
 ## 1. Projet
 
 ### Structure
